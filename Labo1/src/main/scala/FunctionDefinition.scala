@@ -11,9 +11,7 @@ object FunctionDefinition {
 		points.sliding(2).map { case Seq((x0, y0), (x1, y1)) => Slice(x0, y0, x1, y1) }.toIndexedSeq
 	}
 
-	/**
-	  * A slice of the function.
-	  */
+	/** A slice of the function. */
 	case class Slice(x0: Double, y0: Double, x1: Double, y1: Double) {
 		if (x0 >= x1) throw new IllegalArgumentException(s"x0 [$x0] must be less than x1 [$x1]")
 		if (y0 < 0 || y1 < 0) throw new IllegalArgumentException(s"y0 [$y0] and y1 [$y1] must be greater or equal to 0")
@@ -27,12 +25,12 @@ object FunctionDefinition {
 }
 
 class FunctionDefinition(val slices: IndexedSeq[Slice]) {
-	// Checks that we have at least two points
+	// Check that we have at least two points
 	if (slices.length < 2) {
 		throw new IllegalArgumentException("Function definition requires at least two points")
 	}
 
-	// Checks that at least one yk is greater than zero
+	// Check that at least one yk is greater than zero
 	if (slices.forall { slice => slice.y0 == 0 && slice.y1 == 0 }) {
 		throw new IllegalArgumentException("At least one yk must be non-zero")
 	}
@@ -90,7 +88,7 @@ class FunctionDefinition(val slices: IndexedSeq[Slice]) {
 		def scaleSlice(slice: Slice) = slice.copy(y0 = slice.y0 / area, y1 = slice.y1 / area)
 
 		new FunctionDefinition(slices.map(scaleSlice)) {
-			// Returns the same object, since the function is already a density function. :)
+			// Return the same object, since the function is already a density function. :)
 			override lazy val proportionalDensity: FunctionDefinition = this
 		}
 	}
