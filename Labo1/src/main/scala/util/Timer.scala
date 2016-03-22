@@ -6,7 +6,7 @@ class Timer {
 
 	def now = System.nanoTime()
 
-	/** microseconds since start */
+	/** milliseconds since start */
 	def time = (now - start) / msFactor
 
 	def reset() = {
