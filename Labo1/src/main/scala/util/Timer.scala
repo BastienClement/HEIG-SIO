@@ -1,3 +1,4 @@
+package util
 
 class Timer {
 	private final val msFactor = 1000000.0

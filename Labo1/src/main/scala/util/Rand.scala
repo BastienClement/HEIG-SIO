@@ -1,4 +1,7 @@
-import FunctionDefinition.Slice
+package util
+
+import func.FunctionDefinition
+import gen.RealizationGenerator
 import java.util
 import scala.util.Random
 
@@ -62,7 +65,7 @@ object Rand {
 			val more = large.removeLast()
 
 			// These probabilities have not yet been scaled up to be such that
-         // 1/n is given weight 1.0.  We do this here instead.
+			// 1/n is given weight 1.0.  We do this here instead.
 			probability(less) = probabilities(less) * n
 			alias(less) = more
 
@@ -70,7 +73,7 @@ object Rand {
 			probabilities = probabilities.updated(more, (probabilities(more) + probabilities(less)) - average)
 
 			// If the new probability is less than the average, add it into the
-         // small list; otherwise add it to the large list.
+			// small list; otherwise add it to the large list.
 			val d = if (probabilities(more) >= average) large else small
 			d.add(more)
 		}

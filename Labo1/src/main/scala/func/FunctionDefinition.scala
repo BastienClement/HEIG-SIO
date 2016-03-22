@@ -1,4 +1,6 @@
-import FunctionDefinition.Slice
+package func
+
+import func.FunctionDefinition.Slice
 import scala.annotation.tailrec
 
 object FunctionDefinition {

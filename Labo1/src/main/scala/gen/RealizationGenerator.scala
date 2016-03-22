@@ -1,4 +1,4 @@
-
+package gen
 
 trait RealizationGenerator[+T] {
 	def produce(): T
