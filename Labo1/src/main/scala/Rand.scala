@@ -1,3 +1,4 @@
+import FunctionDefinition.Slice
 import java.util
 import scala.util.Random
 
@@ -15,13 +16,27 @@ object Rand {
 		if (r >= bound) Math.nextDown(r) else r
 	}
 
+	/** Construct a generator returning slices from a function */
+	def sliceGenerator(fd: FunctionDefinition)(implicit random: Random): RealizationGenerator[Slice] = {
+		new RealizationGenerator[Slice] {
+			// Probability chunks of each slice is defined as its area divided by the area of the whole function
+			val law = fd.slices.map { slice => slice.area / fd.area }.zipWithIndex
+
+			// Construct a discrete generator for this law
+			val generator = Rand.discreteGenerator(law)
+
+			// Return a slice based on the discrete generator
+			override def produce(): Slice = fd.slices(generator.produce())
+		}
+	}
+
 	/**
 	  * Constructs a discrete number generator following the given probability table.
 	  * Based on the Alias Method:
 	  * - http://www.keithschwarz.com/darts-dice-coins/
 	  * - http://www.keithschwarz.com/interesting/code/?dir=alias-method
 	  */
-	def discreteRandom[T](law: Seq[(Double, T)])(implicit random: Random) = {
+	def discreteGenerator[T](law: Seq[(Double, T)])(implicit random: Random): RealizationGenerator[T] = {
 		if (!law.hasDefiniteSize) throw new IllegalArgumentException("The law table must have a finite length")
 
 		var (probabilities, values) = law.toVector.unzip
@@ -82,10 +97,17 @@ object Rand {
 
 		new RealizationGenerator[T] {
 			override def produce(): T = {
+				// Generate a fair die roll to determine which column to inspect.
 				val column = random.nextInt(n)
+
+				// Generate a biased coin toss to determine which option to pick.
 				val toss = random.nextDouble() < probability(column)
-				val res = if (toss) column else alias(column)
-				values(res)
+
+				// Based on the outcome, select either the column or its alias.
+				val choice = if (toss) column else alias(column)
+
+				// Return an actual value from the law
+				values(choice)
 			}
 		}
 	}

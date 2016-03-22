@@ -6,7 +6,8 @@ object Labo1 extends App {
 
 	val ftilde = FunctionDefinition(1.0 -> 2.0, 2.0 -> 5.0, 4.0 -> 3.0, 5.0 -> 3.0)
 
-	println(ftilde.pks)
+	val sg = Rand.sliceGenerator(ftilde)
+	println(sg.produce(10))
 
 	val hmg = new HitMissGenerator(ftilde)
 }

@@ -1,5 +1,6 @@
 import FunctionDefinition.Slice
 import scala.annotation.tailrec
+import scala.util.Random
 
 object FunctionDefinition {
 	def apply(points: (Double, Double)*) = new FunctionDefinition(slicesFromPoints(points))
@@ -17,7 +18,7 @@ object FunctionDefinition {
 		if (y0 < 0 || y1 < 0) throw new IllegalArgumentException(s"y0 [$y0] and y1 [$y1] must be greater or equal to 0")
 
 		val m = (y1 - y0) / (x1 - x0)
-		lazy val area = (x1 - x0) * (y1 + y0) / 2
+		val area = (x1 - x0) * (y1 + y0) / 2
 
 		def contains(x: Double) = x >= x0 && x <= x1
 		def evaluate(x: Double) = m * (x - x0) + y0
@@ -50,6 +51,9 @@ class FunctionDefinition(val slices: IndexedSeq[Slice]) {
 		slices.map(extractAbscissasAndYMax).reduce(minMax)
 	}
 
+	/** Area under the function */
+	lazy val area: Double = slices.foldLeft(0.0) { (a, slice) => a + slice.area }
+
 	/** Returns the slice containing the given x value. */
 	def sliceFor(x: Double): Slice = {
 		@tailrec
@@ -67,14 +71,8 @@ class FunctionDefinition(val slices: IndexedSeq[Slice]) {
 		search(0, slices.length - 1)
 	}
 
-	/** Probability chunks of each slice (defined as its area divided by the area of the whole function) */
-	lazy val pks = slices.map { slice => slice.area / area }
-
 	/** Evaluates the function for the given x value */
 	def evaluate(x: Double) = sliceFor(x).evaluate(x)
-
-	/** Area under the function */
-	lazy val area: Double = slices.foldLeft(0.0) { (a, slice) => a + slice.area }
 
 	/**
 	  * Returns a new FunctionDefinition (proportional to this one) with an area of 1,
