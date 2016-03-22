@@ -16,19 +16,8 @@ object Rand {
 		if (r >= bound) Math.nextDown(r) else r
 	}
 
-	/** Construct a generator returning slices from a function */
-	def sliceGenerator(fd: FunctionDefinition)(implicit random: Random): RealizationGenerator[Slice] = {
-		new RealizationGenerator[Slice] {
-			// Probability chunks of each slice is defined as its area divided by the area of the whole function
-			val law = fd.slices.map { slice => slice.area / fd.area }.zipWithIndex
-
-			// Construct a discrete generator for this law
-			val generator = Rand.discreteGenerator(law)
-
-			// Return a slice based on the discrete generator
-			override def produce(): Slice = fd.slices(generator.produce())
-		}
-	}
+	/** Construct a discrete generator returning slices from a function */
+	def sliceGenerator(fd: FunctionDefinition)(implicit random: Random) = discreteGenerator(fd.slicesLaw)
 
 	/**
 	  * Constructs a discrete number generator following the given probability table.

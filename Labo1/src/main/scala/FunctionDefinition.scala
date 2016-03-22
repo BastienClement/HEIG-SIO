@@ -1,6 +1,5 @@
 import FunctionDefinition.Slice
 import scala.annotation.tailrec
-import scala.util.Random
 
 object FunctionDefinition {
 	def apply(points: (Double, Double)*) = new FunctionDefinition(slicesFromPoints(points))
@@ -53,6 +52,12 @@ class FunctionDefinition(val slices: IndexedSeq[Slice]) {
 
 	/** Area under the function */
 	lazy val area: Double = slices.foldLeft(0.0) { (a, slice) => a + slice.area }
+
+	/**
+	  * Construct a discrete law associating each slice of the function to a probability defined
+	  * as the ratio between the area of the slice and the area of the whole function.
+	  */
+	lazy val slicesLaw = slices.map { slice => (slice.area / area, slice) }
 
 	/** Returns the slice containing the given x value. */
 	def sliceFor(x: Double): Slice = {
