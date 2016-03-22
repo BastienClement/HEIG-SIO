@@ -14,7 +14,7 @@ object Rand {
 	def nextDouble(origin: Double, bound: Double)(implicit random: Random): Double = {
 		val r = nextDouble * (bound - origin) + origin
 
-		// Correct potential double rounding error
+		// Correct possible double rounding error
 		// See: https://docs.oracle.com/javase/8/docs/api/java/util/Random.html#doubles-double-double-
 		if (r >= bound) Math.nextDown(r) else r
 	}
@@ -52,20 +52,18 @@ object Rand {
 			d.add(i)
 		}
 
-		/*
-			As a note: in the mathematical specification of the algorithm, we
-	      will always exhaust the small list before the big list.  However,
-	      due to floating point inaccuracies, this is not necessarily true.
-	      Consequently, this inner loop (which tries to pair small and large
-	      elements) will have to check that both lists aren't empty.
-      */
+		/* As a note: in the mathematical specification of the algorithm, we
+		will always exhaust the small list before the big list.  However,
+		due to floating point inaccuracies, this is not necessarily true.
+		Consequently, this inner loop (which tries to pair small and large
+		elements) will have to check that both lists aren't empty. */
 		while (!small.isEmpty && !large.isEmpty) {
-			/* Get the index of the small and the large probabilities. */
+			// Get the index of the small and the large probabilities.
 			val less = small.removeLast()
 			val more = large.removeLast()
 
-			// These probabilities have not yet been scaled up to be such that
-			// 1/n is given weight 1.0.  We do this here instead.
+			// These probabilities have not yet been scaled up to be such
+			// that 1/n is given weight 1.0.  We do this here instead.
 			probability(less) = probabilities(less) * n
 			alias(less) = more
 
@@ -78,12 +76,10 @@ object Rand {
 			d.add(more)
 		}
 
-		/*
-			At this point, everything is in one list, which means that the
-         remaining probabilities should all be 1/n.  Based on this, set them
-         appropriately.  Due to numerical issues, we can't be sure which
-         stack will hold the entries, so we empty both.
-		 */
+		/* At this point, everything is in one list, which means that the
+		remaining probabilities should all be 1/n.  Based on this, set them
+		appropriately.  Due to numerical issues, we can't be sure which
+		stack will hold the entries, so we empty both. */
 		while (!small.isEmpty) probability(small.removeLast()) = 1.0
 		while (!large.isEmpty) probability(large.removeLast()) = 1.0
 
