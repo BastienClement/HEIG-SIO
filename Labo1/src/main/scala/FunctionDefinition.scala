@@ -69,6 +69,9 @@ class FunctionDefinition(val slices: IndexedSeq[Slice]) {
 		search(0, slices.length - 1)
 	}
 
+	/** Probability chunks of each slice (defined as its area divided by the area of the whole function) */
+	lazy val pks = slices.map { slice => slice.area / area }
+
 	/** Evaluates the function for the given x value */
 	def evaluate(x: Double) = sliceFor(x).evaluate(x)
 
@@ -88,7 +91,7 @@ class FunctionDefinition(val slices: IndexedSeq[Slice]) {
 
 		new FunctionDefinition(slices.map(scaleSlice)) {
 			// Returns the same object, since the function is already a density function. :)
-			override val proportionalDensity: FunctionDefinition = this
+			override lazy val proportionalDensity: FunctionDefinition = this
 		}
 	}
 }
