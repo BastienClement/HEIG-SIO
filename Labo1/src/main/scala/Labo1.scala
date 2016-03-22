@@ -6,8 +6,12 @@ object Labo1 extends App {
 
 	val ftilde = FunctionDefinition(1.0 -> 2.0, 2.0 -> 5.0, 4.0 -> 3.0, 5.0 -> 3.0)
 
-	val sg = Rand.sliceGenerator(ftilde)
-	println(sg.produce(10))
-
+	val ev = ftilde.expectedValue
 	val hmg = new HitMissGenerator(ftilde)
+
+	val count = 1000000
+	val exp = hmg.produce(count).sum / count
+
+	println("Experimental: " + exp)
+	println("Expected value: " + ev)
 }

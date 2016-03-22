@@ -18,6 +18,7 @@ object FunctionDefinition {
 
 		val m = (y1 - y0) / (x1 - x0)
 		val area = (x1 - x0) * (y1 + y0) / 2
+		val expectedValue = (x0 * (2 * y0 + y1) + x1 * (y0 + 2 * y1)) / (3 * (y0 + y1))
 
 		def contains(x: Double) = x >= x0 && x <= x1
 		def evaluate(x: Double) = m * (x - x0) + y0
@@ -54,10 +55,15 @@ class FunctionDefinition(val slices: IndexedSeq[Slice]) {
 	lazy val area: Double = slices.foldLeft(0.0) { (a, slice) => a + slice.area }
 
 	/**
-	  * Construct a discrete law associating each slice of the function to a probability defined
+	  * Constructs a discrete law associating each slice of the function to a probability defined
 	  * as the ratio between the area of the slice and the area of the whole function.
 	  */
 	lazy val slicesLaw = slices.map { slice => (slice.area / area, slice) }
+
+	/**
+	  * Computes the expected value of a variable X ...
+	  */
+	lazy val expectedValue = slicesLaw.map { case (prob, slice) => prob * slice.expectedValue }.sum
 
 	/** Returns the slice containing the given x value. */
 	def sliceFor(x: Double): Slice = {
