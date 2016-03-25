@@ -23,7 +23,9 @@ class GeometricGenerator(fd: FunctionDefinition)(implicit random: Random) extend
 		val b = Rand.nextDouble(0, slice.y0 + slice.y1)
 
 		// If (a, b) falls in the function's area return x else use symmetrical point
-		if (b <= fd.evaluate(a)) a
+		// There is no point in evaluating the whole function since the x value will
+		// fall in the slice we already have. Simply evaluate the slice.
+		if (b <= slice.evaluate(a)) a
 		else slice.x1 - (a - slice.x0)
 	}
 }
