@@ -3,15 +3,19 @@ package util
 import func.FunctionDefinition
 import gen.RealizationGenerator
 import java.util
-import scala.util.Random
+import java.util.Random
 
 /** Helper for generating random values */
 object Rand {
-	/** Generates a random Double value between [0; 1[ */
-	def nextDouble(implicit random: Random): Double = random.nextDouble()
+	/**
+	  * Generates a random Double value between [0; 1[
+	  */
+	@inline def nextDouble(implicit random: Random): Double = random.nextDouble()
 
-	/** Generates a random Double value between [origin; bound[ */
-	def nextDouble(origin: Double, bound: Double)(implicit random: Random): Double = {
+	/**
+	  * Generates a random Double value between [origin; bound[
+	  */
+	@inline def nextDouble(origin: Double, bound: Double)(implicit random: Random): Double = {
 		val r = nextDouble * (bound - origin) + origin
 
 		// Correct possible double rounding error
@@ -19,7 +23,9 @@ object Rand {
 		if (r >= bound) Math.nextDown(r) else r
 	}
 
-	/** Construct a discrete generator returning slices from a function */
+	/**
+	  * Constructs a discrete generator returning slices from a function.
+	  */
 	def sliceGenerator(fd: FunctionDefinition)(implicit random: Random) = discreteGenerator(fd.slicesLaw)
 
 	/**
@@ -31,7 +37,10 @@ object Rand {
 	def discreteGenerator[T](law: Seq[(Double, T)])(implicit random: Random): RealizationGenerator[T] = {
 		if (!law.hasDefiniteSize) throw new IllegalArgumentException("The law table must have a finite length")
 
+		// Split the law into a vector of probabilities and a vector of values
 		var (probabilities, values) = law.toVector.unzip
+
+		// The number of discrete values
 		val n = values.length
 
 		// Allocate space for the probability and alias tables.
@@ -48,8 +57,7 @@ object Rand {
 		for (i <- probabilities.indices) {
 			// If the probability is below the average probability, then we add
 			// it to the small list; otherwise we add it to the large list.
-			val d = if (probabilities(i) >= average) large else small
-			d.add(i)
+			if (probabilities(i) >= average) large.add(i) else small.add(i)
 		}
 
 		/* As a note: in the mathematical specification of the algorithm, we
@@ -72,8 +80,7 @@ object Rand {
 
 			// If the new probability is less than the average, add it into the
 			// small list; otherwise add it to the large list.
-			val d = if (probabilities(more) >= average) large else small
-			d.add(more)
+			if (probabilities(more) >= average) large.add(more) else small.add(more)
 		}
 
 		/* At this point, everything is in one list, which means that the

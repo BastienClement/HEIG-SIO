@@ -3,38 +3,89 @@ package func
 import func.FunctionDefinition.Slice
 import scala.annotation.tailrec
 
+/**
+  * Companion object for the FunctionDefinition class
+  */
 object FunctionDefinition {
+	/**
+	  * Helper constructor taking a variable number of pairs defining each points of the function.
+	  */
 	def apply(points: (Double, Double)*) = new FunctionDefinition(slicesFromPoints(points))
 
-	def apply(points: IndexedSeq[(Double, Double)]) = new FunctionDefinition(slicesFromPoints(points))
+	/**
+	  * Helper constructor taking any kind of traversable collection of slices to construct the function.
+	  */
+	def apply(slices: TraversableOnce[Slice]) = new FunctionDefinition(slices.toIndexedSeq)
 
-	def apply(slices: Iterable[Slice]) = new FunctionDefinition(slices.toIndexedSeq)
-
-	/** Constructs an indexed sequence of Slices from a sequence of points (given as pairs) */
+	/**
+	  * Constructs an indexed sequence of Slices from a sequence of points (given as pairs)
+	  */
 	def slicesFromPoints(points: Seq[(Double, Double)]): IndexedSeq[Slice] = {
-		points.sliding(2).map { case Seq((x0, y0), (x1, y1)) => Slice(x0, y0, x1, y1) }.toIndexedSeq
+		// Groups each point with its neighbors by using a sliding window of width 2
+		// --> (1, 2) (2, 3) (3, 4) ...
+		val pairs = points.sliding(2)
+
+		// Transform pairs of points to slices
+		val slices = for (Seq((x0, y0), (x1, y1)) <- pairs) yield Slice(x0, y0, x1, y1)
+
+		// Return an IndexedSeq because we'll need to have O(1) access time to item in this collection
+		slices.toIndexedSeq
 	}
 
-	/** A slice of the function. */
+	/**
+	  * A slice of the function
+	  *
+	  * Most of the computation performed by this class are based on
+	  * answers to the questions of Exercise 1 (TP1).
+	  */
 	case class Slice(x0: Double, y0: Double, x1: Double, y1: Double) {
+		// Check constraints
 		if (x0 >= x1) throw new IllegalArgumentException(s"x0 [$x0] must be less than x1 [$x1]")
 		if (y0 < 0 || y1 < 0) throw new IllegalArgumentException(s"y0 [$y0] and y1 [$y1] must be greater or equal to 0")
 
+		/**
+		  * This slice's slope (dY / dX)
+		  */
 		val m = (y1 - y0) / (x1 - x0)
+
+		/**
+		  * The area between the slice's graph and the x-axis between x0 and x1.
+		  *
+		  * Instead of computing a definite integral, we are using the fact that the slice
+		  * also defines a trapezoid with an area way easier to compute.
+		  */
 		val area = (x1 - x0) * (y1 + y0) / 2
+
+		/**
+		  * The expected value of a random variable using this slice as its density function.
+		  */
 		val expectedValue = (x0 * (2 * y0 + y1) + x1 * (y0 + 2 * y1)) / (3 * (y0 + y1))
 
+		/**
+		  * Checks if a given x value is contained in this slice.
+		  */
 		def contains(x: Double) = x >= x0 && x <= x1
 
+		/**
+		  * Evaluates this slice's sub-function at the given x value.
+		  * Should not be called with an x value not contained in this slice.
+		  */
 		def evaluate(x: Double) = m * (x - x0) + y0
 	}
 
 }
 
+/**
+  * Definition an piecewise function with affine sub-functions.
+  * The function is defined as a sequence of Slice objects describing each piece's slice of the function.
+  *
+  * The constructor of this class should not be called directly. Instead, one of the helper functions from
+  * the companion object should be used.
+  */
 class FunctionDefinition(val slices: IndexedSeq[Slice]) {
-	// Check that we have at least two points
-	if (slices.length < 2) {
-		throw new IllegalArgumentException("Function definition requires at least two points")
+	// Check that we have at least one slice
+	if (slices.length < 1) {
+		throw new IllegalArgumentException("Function definition requires at least one slice")
 	}
 
 	// Check that at least one yk is greater than zero
@@ -42,10 +93,10 @@ class FunctionDefinition(val slices: IndexedSeq[Slice]) {
 		throw new IllegalArgumentException("At least one yk must be non-zero")
 	}
 
-	// Computes min/max abscissas and y_max for the function
+	// Computes min/max x-axis values and y_max
 	val (a, b, ym) = {
-		/** Extracts min and max abscissas, y_max for a given slice */
-		def extractAbscissasAndYMax(s: Slice) = (s.x0, s.x1, s.y0 max s.y1)
+		/** Extracts min and max x-axis values and y_max for a given slice */
+		def extractXsAndYMax(s: Slice) = (s.x0, s.x1, s.y0 max s.y1)
 
 		/** Given two tuple (x0, x1, y_max), computes a new tuple of overall min/max. */
 		def minMax(a: (Double, Double, Double), b: (Double, Double, Double)) = {
@@ -54,27 +105,37 @@ class FunctionDefinition(val slices: IndexedSeq[Slice]) {
 			(x0a min x0b, x1a max x1b, yma max ymb)
 		}
 
-		slices.map(extractAbscissasAndYMax).reduce(minMax)
+		slices.map(extractXsAndYMax).reduce(minMax)
 	}
 
-	/** Area under the function */
+	/**
+	  * The area under between the function's graph and the x-axis.
+	  * Defined as the sum of the area of every slices.
+	  */
 	lazy val area: Double = slices.foldLeft(0.0) { (a, slice) => a + slice.area }
 
 	/**
-	  * Constructs a discrete law associating each slice of the function to a probability defined
-	  * as the ratio between the area of the slice and the area of the whole function.
+	  * A discrete law associating each slice to a probability defined as the ratio
+	  * between the area of the slice and the area of the whole function.
 	  */
-	lazy val slicesLaw = slices.map { slice => (slice.area / area, slice) }
+	lazy val slicesLaw: IndexedSeq[(Double, Slice)] = slices.map { slice => (slice.area / area, slice) }
 
 	/**
-	  * Computes the expected value of a variable X ...
+	  * Computes the expected value of a random variable X generated by using a scaled
+	  * version of this function as its density function.
+	  *
+	  * Defined as the weighted mean of the expected value of each slices by the area ratio of the slice.
 	  */
-	lazy val expectedValue = slicesLaw.map { case (prob, slice) => prob * slice.expectedValue }.sum
+	lazy val expectedValue = slicesLaw.map { case (pk, slice) => pk * slice.expectedValue }.sum
 
-	/** Returns the slice containing the given x value. */
+	/**
+	  * Returns the slice containing the given x value.
+	  * Throws an exception is called with an x value outside the [a, b] interval.
+	  */
 	def sliceFor(x: Double): Slice = {
-		@tailrec
-		def search(lo: Int, hi: Int): Slice = {
+		// Binary search implementation
+		// This function is tail-recursive and will be optimized to a simple while loop by the compiler.
+		@tailrec def search(lo: Int, hi: Int): Slice = {
 			if (lo > hi) throw new IllegalArgumentException(s"Function is undefined for x = $x")
 
 			val mid = (lo + hi) / 2
@@ -85,10 +146,14 @@ class FunctionDefinition(val slices: IndexedSeq[Slice]) {
 			else search(mid + 1, hi)
 		}
 
+		// Start with the whole array
 		search(0, slices.length - 1)
 	}
 
-	/** Evaluates the function for the given x value */
+	/**
+	  * Evaluates the function for the given x value.
+	  * Throws an exception is called with an x value outside the [a, b] interval.
+	  */
 	def evaluate(x: Double) = sliceFor(x).evaluate(x)
 
 	/**
