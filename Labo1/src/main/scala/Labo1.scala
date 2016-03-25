@@ -1,7 +1,7 @@
 import func.FunctionDefinition
 import gen.{GeometricGenerator, HitMissGenerator, InverseGenerator}
 import java.util.concurrent.ThreadLocalRandom
-import util.{MonteCarlo, Timer, DoubleSeqMean}
+import util.{MonteCarlo, Timer, StatsOps}
 
 object Labo1 extends App {
 	// Function definition
@@ -44,7 +44,6 @@ object Labo1 extends App {
 
 	// Mathematical expected value
 	println("Mathematical expected value: " + f.expectedValue + "\n")
-	Thread.sleep(5000)
 
 	// Benchmark generators
 	val timer = new Timer

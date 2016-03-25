@@ -16,7 +16,7 @@ object MonteCarlo {
 	case class Result(mean: Double, sd: Double, ci: ConfidenceInterval)
 
 	/** Computes statistics for a sequence of realizations */
-	def stats(realizations: Seq[Double]): Result = {
+	def stats(realizations: IndexedSeq[Double]): Result = {
 		// Sample size
 		val n = realizations.length
 
@@ -24,10 +24,7 @@ object MonteCarlo {
 		val mean = realizations.mean
 
 		// Standard deviation estimation
-		var s = 0.0
-		for (xk <- realizations) s += Math.pow(xk - mean, 2)
-		s /= n - 1
-		//val s = Math.sqrt(realizations.foldLeft(0.0) { (acc, xk) => acc + Math.pow(xk - mean, 2) / (n - 1) })
+		val s = realizations.stdev
 
 		// One half of the confidence interval
 		// Using z* instead of t* because it's easier
