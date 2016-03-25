@@ -24,6 +24,11 @@ object Rand {
 	}
 
 	/**
+	  * Generates a random Int value between [origin; bound[
+	  */
+	def nextInt(origin: Int, bound: Int)(implicit random: Random): Int = random.nextInt(bound - origin) + origin
+
+	/**
 	  * Constructs a discrete generator returning slices from a function.
 	  */
 	def sliceGenerator(fd: FunctionDefinition)(implicit random: Random) = discreteGenerator(fd.slicesLaw)

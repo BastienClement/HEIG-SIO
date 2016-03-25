@@ -15,15 +15,15 @@ object FunctionDefinition {
 	/**
 	  * Helper constructor taking any kind of traversable collection of slices to construct the function.
 	  */
-	def apply(slices: TraversableOnce[Slice]) = new FunctionDefinition(slices.toArray)
+	def apply(slices: TraversableOnce[(Double, Double)]) = new FunctionDefinition(slicesFromPoints(slices))
 
 	/**
 	  * Constructs an indexed sequence of Slices from a sequence of points (given as pairs)
 	  */
-	def slicesFromPoints(points: Seq[(Double, Double)]): Array[Slice] = {
+	def slicesFromPoints(points: TraversableOnce[(Double, Double)]): Array[Slice] = {
 		// Groups each point with its neighbors by using a sliding window of width 2
 		// --> (1, 2) (2, 3) (3, 4) ...
-		val pairs = points.sliding(2)
+		val pairs = points.toSeq.sliding(2)
 
 		// Transform pairs of points to slices
 		val slices = for (Seq((x0, y0), (x1, y1)) <- pairs) yield Slice(x0, y0, x1, y1)
