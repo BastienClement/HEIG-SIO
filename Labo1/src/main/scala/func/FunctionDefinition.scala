@@ -5,7 +5,9 @@ import scala.annotation.tailrec
 
 object FunctionDefinition {
 	def apply(points: (Double, Double)*) = new FunctionDefinition(slicesFromPoints(points))
+
 	def apply(points: IndexedSeq[(Double, Double)]) = new FunctionDefinition(slicesFromPoints(points))
+
 	def apply(slices: Iterable[Slice]) = new FunctionDefinition(slices.toIndexedSeq)
 
 	/** Constructs an indexed sequence of Slices from a sequence of points (given as pairs) */
@@ -23,8 +25,10 @@ object FunctionDefinition {
 		val expectedValue = (x0 * (2 * y0 + y1) + x1 * (y0 + 2 * y1)) / (3 * (y0 + y1))
 
 		def contains(x: Double) = x >= x0 && x <= x1
+
 		def evaluate(x: Double) = m * (x - x0) + y0
 	}
+
 }
 
 class FunctionDefinition(val slices: IndexedSeq[Slice]) {
