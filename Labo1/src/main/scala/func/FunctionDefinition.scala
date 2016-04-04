@@ -114,7 +114,7 @@ class FunctionDefinition(val slices: Array[Slice]) {
 	  * The area under between the function's graph and the x-axis.
 	  * Defined as the sum of the area of every slices.
 	  */
-	lazy val area: Double = slices.filter(_.nonNull).foldLeft(0.0) { (a, slice) => a + slice.area }
+	lazy val area: Double = slices.foldLeft(0.0) { (a, slice) => a + slice.area }
 
 	/**
 	  * A discrete law associating each slice to a probability defined as the ratio
@@ -128,7 +128,7 @@ class FunctionDefinition(val slices: Array[Slice]) {
 	  *
 	  * Defined as the weighted mean of the expected value of each slices by the area ratio of the slice.
 	  */
-	lazy val expectedValue = slicesLaw.map { case (pk, slice) => pk * slice.expectedValue }.sum
+	lazy val expectedValue = slicesLaw.collect { case (pk, slice) if slice.nonNull => pk * slice.expectedValue }.sum
 
 	/**
 	  * Returns the slice containing the given x value.
