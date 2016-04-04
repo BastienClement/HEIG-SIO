@@ -4,13 +4,13 @@ import gen.{GeometricGenerator, HitMissGenerator, InverseGenerator}
 import java.util.Random
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.tailrec
-import util.{MonteCarlo, Rand, StatsOps, Timer}
+import util.{ExtendedRandom, MonteCarlo, StatsOps, Timer}
 
 object Labo1 extends App {
 	/**
 	  * Constructs a default random generator
 	  */
-	def defaultRandom = ThreadLocalRandom.current()
+	def defaultRandom = new Random(42) with ExtendedRandom
 
 	/**
 	  * Computes the ratio between the function's area and its bounding box
@@ -22,11 +22,11 @@ object Labo1 extends App {
 	  */
 	@tailrec
 	def craftFunction(n: Int, ymin: Int, ymax: Int, a: Int, b: Int)
-	                 (implicit random: Random): FunctionDefinition = {
+	                 (implicit random: ExtendedRandom): FunctionDefinition = {
 		if (n < 2 || ymax == 0 || a >= b) throw new IllegalArgumentException
 
-		val xs = (1 to (n * 2)).map(_ => Rand.nextInt(a, b)).distinct.take(n)
-		lazy val points = xs.sorted.map(x => (x, Rand.nextInt(ymin, ymax + 1)): (Double, Double))
+		val xs = (1 to (n * 2)).map(_ => random.nextInt(a, b)).distinct.take(n)
+		lazy val points = xs.sorted.map(x => (x, random.nextInt(ymin, ymax + 1)): (Double, Double))
 		lazy val valid = !points.forall { case (_, y) => y == 0 }
 
 		if (xs.length == n && valid) FunctionDefinition(points)
@@ -39,7 +39,7 @@ object Labo1 extends App {
 	  */
 	@tailrec
 	def craftFunctionWithRatio(n: Int, ymin: Int, ymax: Int, a: Int, b: Int, rmin: Double, rmax: Double)
-	                          (implicit random: Random): FunctionDefinition = {
+	                          (implicit random: ExtendedRandom): FunctionDefinition = {
 		val fd = craftFunction(n, ymin, ymax, a, b)
 		val ratio = areaRatio(fd)
 
@@ -51,21 +51,24 @@ object Labo1 extends App {
 	  * Crafts a random function with good params
 	  */
 	def craftSuitableFunction(ratio: Double): FunctionDefinition = {
-		implicit val rand = new Random()
+		implicit val rand = new Random() with ExtendedRandom
 		craftFunctionWithRatio(8, 2, 8, 1, 9, ratio - 0.05, ratio + 0.05)
 	}
 
 	// Generator factories
 	def hmg(fd: FunctionDefinition) = {
-		implicit val rand = defaultRandom; new HitMissGenerator(fd)
+		implicit val rand = defaultRandom
+		new HitMissGenerator(fd)
 	}
 
 	def geg(fd: FunctionDefinition) = {
-		implicit val rand = defaultRandom; new GeometricGenerator(fd)
+		implicit val rand = defaultRandom
+		new GeometricGenerator(fd)
 	}
 
 	def ing(fd: FunctionDefinition) = {
-		implicit val rand = defaultRandom; new InverseGenerator(fd)
+		implicit val rand = defaultRandom
+		new InverseGenerator(fd)
 	}
 
 	/**
@@ -84,11 +87,7 @@ object Labo1 extends App {
 		}
 	}
 
-	warmup()
-
-	for (target_ratio <- Seq(0.4, 0.6, 0.9)) {
-		// The function for this run
-		val fd = craftSuitableFunction(target_ratio)
+	def benchmarkFunction(fd: FunctionDefinition) = {
 		val ratio = areaRatio(fd)
 
 		// Mathematical expected value and ratio
@@ -108,7 +107,7 @@ object Labo1 extends App {
 			val timer = new Timer
 			val name = gen.getClass.getSimpleName
 
-			val Seq(ev, time) = MonteCarlo.multirun(10000) {
+			val Seq(ev, time) = MonteCarlo.multirun(1000) {
 				val count = 100000
 				timer.reset()
 
@@ -126,5 +125,13 @@ object Labo1 extends App {
 
 		// Print results as CSV
 		res.seq.foreach(println _)
+	}
+
+
+	warmup()
+	for (target_ratio <- Seq(0.4, 0.6, 0.9)) {
+		// The function for this run
+		val fd = craftSuitableFunction(target_ratio)
+		benchmarkFunction(fd)
 	}
 }

@@ -1,6 +1,8 @@
+import scala.language.implicitConversions
+
 package object util {
 	/**
-	  * Computes the mean of a sequence of Doubles
+	  * Computes the mean/stdev of a sequence of Doubles
 	  */
 	implicit class StatsOps(val seq: Seq[Double]) extends AnyVal {
 		@inline def mean = seq.sum / seq.length
@@ -13,4 +15,9 @@ package object util {
 			Math.sqrt(sum / (seq.length - 1))
 		}
 	}
+
+	/**
+	  * Implicitly converts any type T for which a Numeric[T] exists to a Double
+	  */
+	@inline implicit def NumericToDouble[T](n: T)(implicit ev: Numeric[T]): Double = ev.toDouble(n)
 }

@@ -2,16 +2,16 @@ package gen
 
 import func.FunctionDefinition
 import java.util.Random
-import util.Rand
+import util.{DiscreteGenerator, ExtendedRandom}
 
 /**
   * Generates realizations of a random variable following the given density function.
   * This implementation is using the inverse of the repartition function to achieve constant time complexity.
   * Based on the answer to question 1.f from TP1.
   */
-class InverseGenerator(fd: FunctionDefinition)(implicit random: Random) extends RealizationGenerator[Double] {
+class InverseGenerator(fd: FunctionDefinition)(implicit random: ExtendedRandom) extends RealizationGenerator[Double] {
 	// Random slices generator
-	val sg = Rand.sliceGenerator(fd)
+	val sg = DiscreteGenerator.ofFunctionSlices(fd)
 
 	override def produce(): Double = {
 		// Select a random slice
@@ -31,6 +31,6 @@ class InverseGenerator(fd: FunctionDefinition)(implicit random: Random) extends 
 		val inverse = if (slice.y0 == slice.y1) uniformInverse _ else affineInverse _
 
 		// Evaluate it
-		inverse(Rand.nextDouble)
+		inverse(random.nextDouble)
 	}
 }
