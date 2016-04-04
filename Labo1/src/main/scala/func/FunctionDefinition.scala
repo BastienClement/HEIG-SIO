@@ -2,6 +2,7 @@ package func
 
 import func.FunctionDefinition.Slice
 import scala.annotation.tailrec
+import util.NumericToDouble
 
 /**
   * Companion object for the FunctionDefinition class
@@ -10,17 +11,17 @@ object FunctionDefinition {
 	/**
 	  * Helper constructor taking a variable number of pairs defining each points of the function.
 	  */
-	def apply(points: (Double, Double)*) = new FunctionDefinition(slicesFromPoints(points))
+	def apply[T : Numeric](points: (T, T)*) = new FunctionDefinition(slicesFromPoints(points))
 
 	/**
 	  * Helper constructor taking any kind of traversable collection of slices to construct the function.
 	  */
-	def apply(slices: TraversableOnce[(Double, Double)]) = new FunctionDefinition(slicesFromPoints(slices))
+	def apply[T : Numeric](slices: TraversableOnce[(T, T)]) = new FunctionDefinition(slicesFromPoints(slices))
 
 	/**
 	  * Constructs an indexed sequence of Slices from a sequence of points (given as pairs)
 	  */
-	def slicesFromPoints(points: TraversableOnce[(Double, Double)]): Array[Slice] = {
+	def slicesFromPoints[T : Numeric](points: TraversableOnce[(T, T)]): Array[Slice] = {
 		// Groups each point with its neighbors by using a sliding window of width 2
 		// --> (1, 2) (2, 3) (3, 4) ...
 		val pairs = points.toSeq.sliding(2)
@@ -62,6 +63,11 @@ object FunctionDefinition {
 		val expectedValue = (x0 * (2 * y0 + y1) + x1 * (y0 + 2 * y1)) / (3 * (y0 + y1))
 
 		/**
+		  * The slice is non-null
+		  */
+		val nonNull = y0 != 0.0 || y1 != 0.0
+
+		/**
 		  * Checks if a given x value is contained in this slice.
 		  */
 		def contains(x: Double) = x >= x0 && x <= x1
@@ -84,14 +90,10 @@ object FunctionDefinition {
   */
 class FunctionDefinition(val slices: Array[Slice]) {
 	// Check that we have at least one slice
-	if (slices.length < 1) {
-		throw new IllegalArgumentException("Function definition requires at least one slice")
-	}
+	if (slices.length < 1) throw new IllegalArgumentException("Function definition requires at least one slice")
 
 	// Check that at least one yk is greater than zero
-	if (slices.forall { slice => slice.y0 == 0 && slice.y1 == 0 }) {
-		throw new IllegalArgumentException("At least one yk must be non-zero")
-	}
+	if (!slices.exists(_.nonNull)) throw new IllegalArgumentException("At least one yk must be non-zero")
 
 	// Computes min/max x-axis values and y_max
 	val (a, b, ym) = {
@@ -112,7 +114,7 @@ class FunctionDefinition(val slices: Array[Slice]) {
 	  * The area under between the function's graph and the x-axis.
 	  * Defined as the sum of the area of every slices.
 	  */
-	lazy val area: Double = slices.foldLeft(0.0) { (a, slice) => a + slice.area }
+	lazy val area: Double = slices.filter(_.nonNull).foldLeft(0.0) { (a, slice) => a + slice.area }
 
 	/**
 	  * A discrete law associating each slice to a probability defined as the ratio
