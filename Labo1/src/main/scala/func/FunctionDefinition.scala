@@ -12,17 +12,17 @@ object FunctionDefinition {
 	/**
 	  * Helper constructor taking a variable number of pairs defining each points of the function.
 	  */
-	def apply[T : Numeric](points: (T, T)*) = new FunctionDefinition(slicesFromPoints(points))
+	def apply[T : Numeric, U : Numeric](points: (T, U)*) = new FunctionDefinition(slicesFromPoints(points))
 
 	/**
 	  * Helper constructor taking any kind of traversable collection of slices to construct the function.
 	  */
-	def apply[T : Numeric](slices: TraversableOnce[(T, T)]) = new FunctionDefinition(slicesFromPoints(slices))
+	def apply[T : Numeric, U : Numeric](slices: TraversableOnce[(T, U)]) = new FunctionDefinition(slicesFromPoints(slices))
 
 	/**
 	  * Constructs an indexed sequence of Slices from a sequence of points (given as pairs)
 	  */
-	def slicesFromPoints[T : Numeric](points: TraversableOnce[(T, T)]): Array[Slice] = {
+	def slicesFromPoints[T : Numeric, U : Numeric](points: TraversableOnce[(T, U)]): Array[Slice] = {
 		// Groups each point with its neighbors by using a sliding window of width 2
 		// --> (1, 2) (2, 3) (3, 4) ...
 		val pairs = points.toSeq.sliding(2)

@@ -87,7 +87,7 @@ object Labo1 extends App {
 		}
 	}
 
-	def benchmarkFunction(fd: FunctionDefinition) = {
+	def benchmarkFunction(fd: FunctionDefinition, runs: Int = 10000, count: Int = 100000) = {
 		val ratio = areaRatio(fd)
 
 		// Mathematical expected value and ratio
@@ -107,8 +107,7 @@ object Labo1 extends App {
 			val timer = new Timer
 			val name = gen.getClass.getSimpleName
 
-			val Seq(ev, time) = MonteCarlo.multirun(1000) {
-				val count = 100000
+			val Seq(ev, time) = MonteCarlo.multirun(runs) {
 				timer.reset()
 
 				val realizations = gen.produce(count)
@@ -125,13 +124,10 @@ object Labo1 extends App {
 
 		// Print results as CSV
 		res.seq.foreach(println _)
+		println("\nTime: " + timer.time / 1000.0 + " seconds")
 	}
 
 
 	warmup()
-	for (target_ratio <- Seq(0.4, 0.6, 0.9)) {
-		// The function for this run
-		val fd = craftSuitableFunction(target_ratio)
-		benchmarkFunction(fd)
-	}
+	Seq(0.4, 0.6, 0.9).map(craftSuitableFunction).foreach(benchmarkFunction(_))
 }

@@ -17,6 +17,6 @@ class HitMissGenerator(fd: FunctionDefinition)(implicit random: ExtendedRandom) 
 
 		// If the point falls inside the function's area the x-value is returned
 		// else another point is generated until the condition is verified.
-		if (y <= fd.evaluate(x)) x else produce()
+		if (y < fd.evaluate(x)) x else produce()
 	}
 }
