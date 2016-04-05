@@ -87,21 +87,26 @@ object Labo1 extends App {
 		}
 	}
 
-	def benchmarkFunction(fd: FunctionDefinition, runs: Int = 10000, count: Int = 100000) = {
-		val ratio = areaRatio(fd)
-
-		// Mathematical expected value and ratio
-		println("\nMathematical expected value: " + fd.expectedValue)
-		println("Function area ratio: " + ratio + "\n")
+	def benchmarkFunction(fd: FunctionDefinition, runs: Int = 10000, count: Int = 100000, parallel: Boolean = true) = {
+		println("\nTesting function:")
 
 		// Prints points
 		val points = fd.slices.flatMap { case Slice(x0, y0, x1, y1) => Array((x0, y0), (x1, y1)) }.distinct
 		println(points.mkString(", "))
-		println()
+
+		println(s"\nSampling: $runs x $count")
+
+		val mev = fd.expectedValue
+		val ratio = areaRatio(fd)
+
+		// Mathematical expected value and ratio
+		println("\nMathematical expected value: " + mev)
+		println("Function area ratio: " + ratio + "\n")
 
 		// Benchmark generators
 		val timer = new Timer
-		val res = for (gen_factory <- Seq(hmg _, geg _, ing _).par) yield {
+		val generators = Seq(hmg _, geg _, ing _)
+		val res = for (gen_factory <- if (parallel) generators.par else generators) yield {
 			implicit val rand = ThreadLocalRandom.current()
 			val gen = gen_factory(fd)
 			val timer = new Timer
@@ -118,8 +123,17 @@ object Labo1 extends App {
 				Vector(ev, time)
 			}
 
-			s"$name,$ratio,${ev.mean},${ev.sd},${ev.ci.min},${ev.ci.max},${ev.ci.delta}," +
-					s"${time.mean},${time.sd},${time.ci.min},${time.ci.max},${time.ci.delta}"
+			val res = if (mev >= ev.ci.min && mev <= ev.ci.max) "OK" else "NOK"
+
+			s"""$name: $res
+				|         Stats |         Mean |      Std Dev |             CI              |     CI Delta
+				|-----------------------------------------------------------------------------------------
+				|Expected value | %12f | %12f | [%12f;%12f] | %12f
+				|     Time [ms] | %12f | %12f | [%12f;%12f] | %12f
+				""".stripMargin.format(
+					ev.mean, ev.sd, ev.ci.min, ev.ci.max, ev.ci.delta,
+					time.mean, time.sd, time.ci.min, time.ci.max, time.ci.delta
+			)
 		}
 
 		// Print results as CSV
