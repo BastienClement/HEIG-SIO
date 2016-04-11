@@ -96,18 +96,21 @@ class FunctionDefinition(val slices: Array[Slice]) {
 	// Check that at least one yk is greater than zero
 	if (!slices.exists(_.nonNull)) throw new IllegalArgumentException("At least one yk must be non-zero")
 
-	// Computes min/max x-axis values and y_max
 	val (a, b, ym) = {
-		/** Extracts min and max x-axis values and y_max for a given slice */
+		/** Extracts min and max x-axis values and y_max for a given Slice */
 		def extractXsAndYMax(s: Slice) = (s.x0, s.x1, s.y0 max s.y1)
 
-		/** Given two tuple (x0, x1, y_max), computes a new tuple of overall min/max. */
-		def minMax(a: (Double, Double, Double), b: (Double, Double, Double)) = {
+		/** (x0, x1, y_max) */
+		type XsAndYMax = (Double, Double, Double)
+
+		/** Given two tuples (x0, x1, y_max), computes a new tuple of overall min/max. */
+		def minMax(a: XsAndYMax, b: XsAndYMax): XsAndYMax = {
 			val (x0a, x1a, yma) = a
 			val (x0b, x1b, ymb) = b
 			(x0a min x0b, x1a max x1b, yma max ymb)
 		}
 
+		// Computes min/max x-axis values and y_max
 		slices.map(extractXsAndYMax).reduce(minMax)
 	}
 

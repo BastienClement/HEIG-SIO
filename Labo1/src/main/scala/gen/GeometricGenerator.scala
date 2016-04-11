@@ -1,7 +1,6 @@
 package gen
 
 import func.FunctionDefinition
-import java.util.Random
 import util.{DiscreteGenerator, ExtendedRandom}
 
 /**
