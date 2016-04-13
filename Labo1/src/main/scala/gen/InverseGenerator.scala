@@ -1,36 +1,31 @@
 package gen
 
 import func.FunctionDefinition
-import java.util.Random
 import util.{DiscreteGenerator, ExtendedRandom}
 
 /**
-  * Generates realizations of a random variable following the given density function.
-  * This implementation is using the inverse of the repartition function to achieve constant time complexity.
-  * Based on the answer to question 1.f from TP1.
+  * Génère des réalisations d'une variable aléatoire selon la fonction de densité donnée.
+  * Cette implémentation utilise l'inverse de la fonction de répartition pour générer des
+  * réalisation en temps constant.
+  * Basé sur les réponses à la question 1.e du TP1.
   */
 class InverseGenerator(fd: FunctionDefinition)(implicit random: ExtendedRandom) extends RealizationGenerator[Double] {
-	// Random slices generator
+	/** Générateur discret de tranches de la fonction */
 	val sg = DiscreteGenerator.ofFunctionSlices(fd)
 
 	override def produce(): Double = {
-		// Select a random slice
+		// Sélection aléatoire d'une tranche
 		val slice = sg.produce()
 
-		// Inverse if y0 == y1
-		def uniformInverse(y: Double) = slice.x0 + y * (slice.x1 - slice.x0)
+		// Sélection d'une valeur de y à inverser
+		val y = random.nextDouble()
 
-		// Inverse if y0 != y1
-		def affineInverse(y: Double) = {
+		if (slice.y0 == slice.y1) {
+			slice.x0 + y * (slice.x1 - slice.x0)
+		} else {
 			val y0_2 = slice.y0 * slice.y0
 			val y1_2 = slice.y1 * slice.y1
 			slice.x0 + (Math.sqrt(y * (y1_2 - y0_2) + y0_2) - slice.y0) / slice.m
 		}
-
-		// Select the correct inverse function
-		val inverse = if (slice.y0 == slice.y1) uniformInverse _ else affineInverse _
-
-		// Evaluate it
-		inverse(random.nextDouble)
 	}
 }

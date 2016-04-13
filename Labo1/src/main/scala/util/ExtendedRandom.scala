@@ -2,20 +2,19 @@ package util
 
 import java.util.Random
 
+/**
+  * Une sous-classe de Random ajoutant des méthodes utiles dans le cas du laboratoire.
+  */
 trait ExtendedRandom extends Random {
-	/**
-	  * Generates a random Double value between [origin; bound[
-	  */
-	@inline def nextDouble(origin: Double, bound: Double)(implicit random: Random): Double = {
+	/** Génère un double entre [origin; bound[ */
+	@inline def nextDouble(origin: Double, bound: Double): Double = {
 		val r = nextDouble() * (bound - origin) + origin
 
-		// Correct possible double rounding error
+		// Possible erreur liée à l'imprécision des doubles
 		// See: https://docs.oracle.com/javase/8/docs/api/java/util/Random.html#doubles-double-double-
 		if (r >= bound) Math.nextDown(r) else r
 	}
 
-	/**
-	  * Generates a random Int value between [origin; bound[
-	  */
-	def nextInt(origin: Int, bound: Int)(implicit random: Random): Int = random.nextInt(bound - origin) + origin
+	/** Génère un entier entre [origin; bound[ */
+	def nextInt(origin: Int, bound: Int): Int = nextInt(bound - origin) + origin
 }

@@ -6,76 +6,80 @@ import util.DiscreteGenerator.Law
 import util.NumericToDouble
 
 /**
-  * Companion object for the FunctionDefinition class
+  * Objet compagnion pour la classe FunctionDefinition
   */
 object FunctionDefinition {
 	/**
-	  * Helper constructor taking a variable number of pairs defining each points of the function.
+	  * Constructeur prenant comme paramètres un nombre variable de points
 	  */
-	def apply[T : Numeric, U : Numeric](points: (T, U)*) = new FunctionDefinition(slicesFromPoints(points))
+	def apply[T: Numeric, U: Numeric](points: (T, U)*) = new FunctionDefinition(slicesFromPoints(points))
 
 	/**
-	  * Helper constructor taking any kind of traversable collection of slices to construct the function.
+	  * Constructeur prenant comme paramètre une séquence de points à utiliser
 	  */
-	def apply[T : Numeric, U : Numeric](slices: TraversableOnce[(T, U)]) = new FunctionDefinition(slicesFromPoints(slices))
+	def apply[T: Numeric, U: Numeric](slices: TraversableOnce[(T, U)]) = new FunctionDefinition(slicesFromPoints(slices))
 
 	/**
-	  * Constructs an indexed sequence of Slices from a sequence of points (given as pairs)
+	  * Construit un tableau de Slice à partir d'une liste de points.
 	  */
-	def slicesFromPoints[T : Numeric, U : Numeric](points: TraversableOnce[(T, U)]): Array[Slice] = {
-		// Groups each point with its neighbors by using a sliding window of width 2
+	def slicesFromPoints[T: Numeric, U: Numeric](points: TraversableOnce[(T, U)]): Array[Slice] = {
+		// Groupe chaque point avec son voisin en utilisant une fenêtre glissante de largeur 2
 		// --> (1, 2) (2, 3) (3, 4) ...
 		val pairs = points.toSeq.sliding(2)
 
-		// Transform pairs of points to slices
+		// Transforme chaque paire de point en Slice
 		val slices = for (Seq((x0, y0), (x1, y1)) <- pairs) yield Slice(x0, y0, x1, y1)
 
-		// Return an Array because we'll need to have O(1) access time to item in this collection
+		// Retourne un tableau pour maximiser les performances d'accès
 		slices.toArray
 	}
 
 	/**
-	  * A slice of the function
+	  * Une tranche de la fonction.
 	  *
-	  * Most of the computation performed by this class are based on
-	  * answers to the questions of Exercise 1 (TP1).
+	  * La plupart des calculs effectués par cette classe sont basés sur
+	  * les réponses aux question de l'exercice 1 du TP1.
 	  */
 	case class Slice(x0: Double, y0: Double, x1: Double, y1: Double) {
-		// Check constraints
+		// Vérification des contraintes
 		if (x0 >= x1) throw new IllegalArgumentException(s"x0 [$x0] must be less than x1 [$x1]")
 		if (y0 < 0 || y1 < 0) throw new IllegalArgumentException(s"y0 [$y0] and y1 [$y1] must be greater or equal to 0")
 
-		/**
-		  * This slice's slope (dY / dX)
-		  */
+		/** Pente de cette tranche de fonction */
 		val m = (y1 - y0) / (x1 - x0)
 
 		/**
-		  * The area between the slice's graph and the x-axis between x0 and x1.
+		  * L'aire entre la courbe de la fonction et l'axe des x, entre x0 et x1.
 		  *
-		  * Instead of computing a definite integral, we are using the fact that the slice
-		  * also defines a trapezoid with an area way easier to compute.
+		  * Au lieu de calculer l'intégrale définie, nous utilisons ici le fait que
+		  * la tranche défini également un trapèze dont l'aire est bien plus simple
+		  * à calculer.
 		  */
 		val area = (x1 - x0) * (y1 + y0) / 2
 
 		/**
-		  * The expected value of a random variable using this slice as its density function.
+		  * L'espérance d'une variable aléatoire qui utiliserait une version
+		  * proportionnelle de cette fonction en tant que fonction de densité.
+		  * Si cette fonction ne peut pas former une fonction de densité (son aire
+		  * est nulle) cette fonction retourne NaN puisqu'une telle variable
+		  * aléatoire ne peut exister.
 		  */
 		val expectedValue = (x0 * (2 * y0 + y1) + x1 * (y0 + 2 * y1)) / (3 * (y0 + y1))
 
 		/**
-		  * The slice is non-null
+		  * La tranche est non-nulle
 		  */
 		val nonNull = y0 != 0.0 || y1 != 0.0
 
 		/**
-		  * Checks if a given x value is contained in this slice.
+		  * Vérifie si une valeur de x est contenue dans la tranche.
 		  */
 		def contains(x: Double) = x >= x0 && x <= x1
 
 		/**
-		  * Evaluates this slice's sub-function at the given x value.
-		  * Should not be called with an x value not contained in this slice.
+		  * Evalue la section de fonction de cette tranche pour un x donné.
+		  * Cette méthode ne doit pas être appelée avec des valeurs de x en dehors
+		  * de la tranche.
 		  */
 		def evaluate(x: Double) = m * (x - x0) + y0
 	}
@@ -83,61 +87,52 @@ object FunctionDefinition {
 }
 
 /**
-  * Definition an piecewise function with affine sub-functions.
-  * The function is defined as a sequence of Slice objects describing each piece's slice of the function.
+  * Définition d'une fonction affine par morceau en tant qu'aggrégat de tranches.
+  * Le constructeur de cette classe est privé, il est nécessaire d'utiliser les constructeurs
+  * de l'objet compagnion pour créer une instance de cette classe.
   *
-  * The constructor of this class should not be called directly. Instead, one of the helper functions from
-  * the companion object should be used.
+  * @param slices les tranches de la fonction
   */
-class FunctionDefinition(val slices: Array[Slice]) {
-	// Check that we have at least one slice
+class FunctionDefinition private(val slices: Array[Slice]) {
+	// Au moins une tranche est définie
 	if (slices.length < 1) throw new IllegalArgumentException("Function definition requires at least one slice")
 
-	// Check that at least one yk is greater than zero
-	if (!slices.exists(_.nonNull)) throw new IllegalArgumentException("At least one yk must be non-zero")
+	// Au moins une tranche possède une aire non-nulle
+	if (!slices.exists(slice => slice.nonNull)) throw new IllegalArgumentException("At least one yk must be non-zero")
 
-	// Computes min/max x-axis values and y_max
-	val (a, b, ym) = {
-		/** Extracts min and max x-axis values and y_max for a given slice */
-		def extractXsAndYMax(s: Slice) = (s.x0, s.x1, s.y0 max s.y1)
+	/** f(x) = 0 pour tout x < a */
+	val a = slices.head.x0
 
-		/** Given two tuple (x0, x1, y_max), computes a new tuple of overall min/max. */
-		def minMax(a: (Double, Double, Double), b: (Double, Double, Double)) = {
-			val (x0a, x1a, yma) = a
-			val (x0b, x1b, ymb) = b
-			(x0a min x0b, x1a max x1b, yma max ymb)
-		}
+	/** f(x) = 0 pour tout x > b */
+	val b = slices.last.x1
 
-		slices.map(extractXsAndYMax).reduce(minMax)
-	}
+	/** La valeur maximale de la fonction */
+	val ym = slices.map(slice => slice.y0 max slice.y1).max
 
 	/**
-	  * The area under between the function's graph and the x-axis.
-	  * Defined as the sum of the area of every slices.
+	  * L'aire entre l'axe des x et la courbe de la fonction.
+	  * Définie comme la somme de l'aire de chaque tranche.
 	  */
-	lazy val area: Double = slices.foldLeft(0.0) { (a, slice) => a + slice.area }
+	lazy val area: Double = slices.map(slice => slice.area).sum
 
 	/**
-	  * A discrete law associating each slice to a probability defined as the ratio
-	  * between the area of the slice and the area of the whole function.
+	  * Une loi discrète associant à chaque tranche une probabilité égale au
+	  * ratio de son aire par rapport à l'aire totale de la fonction.
 	  */
-	lazy val slicesLaw: Law[Slice] = slices.map { slice => (slice.area / area, slice) }
+	lazy val slicesLaw: Law[Slice] = slices.map(slice => (slice.area / area, slice))
 
 	/**
-	  * Computes the expected value of a random variable X generated by using a scaled
-	  * version of this function as its density function.
-	  *
-	  * Defined as the weighted mean of the expected value of each slices by the area ratio of the slice.
+	  * Calcul l'espérance d'une variable aléatoire qui utiliserait une version
+	  * proportionnelle de cette fonction comme fonction de densité.
 	  */
 	lazy val expectedValue = slicesLaw.collect { case (pk, slice) if slice.nonNull => pk * slice.expectedValue }.sum
 
 	/**
-	  * Returns the slice containing the given x value.
-	  * Throws an exception is called with an x value outside the [a, b] interval.
+	  * Retourne la tranche de la fonction contenant la valeur x donnée.
 	  */
 	def sliceFor(x: Double): Slice = {
-		// Binary search implementation
-		// This function is tail-recursive and will be optimized to a simple while loop by the compiler.
+		// Recherche dichotomique
+		// Cette fonction est tail-recursive et sera optimisée en simple boucle par le compilateur
 		@tailrec def search(lo: Int, hi: Int): Slice = {
 			if (lo > hi) throw new IllegalArgumentException(s"Function is undefined for x = $x")
 
@@ -149,30 +144,12 @@ class FunctionDefinition(val slices: Array[Slice]) {
 			else search(mid + 1, hi)
 		}
 
-		// Start with the whole array
+		// On commence avec le tableau entier
 		search(0, slices.length - 1)
 	}
 
 	/**
-	  * Evaluates the function for the given x value.
-	  * Throws an exception is called with an x value outside the [a, b] interval.
+	  * Evalue la fonction pour une valeur de x donnée.
 	  */
 	def evaluate(x: Double) = sliceFor(x).evaluate(x)
-
-	/**
-	  * Returns a new FunctionDefinition (proportional to this one) with an area of 1,
-	  * suitable to be used as a density function.
-	  */
-	lazy val proportionalDensity: FunctionDefinition = {
-		/**
-		  * Scales a slice of this function by the area of this function.
-		  * In practice, we create a new slice with scaled y0 and y1 values.
-		  */
-		def scaleSlice(slice: Slice) = slice.copy(y0 = slice.y0 / area, y1 = slice.y1 / area)
-
-		new FunctionDefinition(slices.map(scaleSlice)) {
-			// Return the same object, since the function is already a density function. :)
-			override lazy val proportionalDensity: FunctionDefinition = this
-		}
-	}
 }

@@ -1,51 +1,66 @@
 package util
 
 /**
-  * Perform
+  * Objet utilitaire pour générer des moyennes et des intervalles de confiance
+  * basées sur la méthode de Monte-Carlo.
   */
 object MonteCarlo {
-	/** Critical value for a 95% confidence level */
+	/** Coefficient de confiance */
 	val z95 = 1.960
 
-	/** Confidence interval */
+	/** Un intevalle de confiance */
 	case class ConfidenceInterval(min: Double, max: Double) {
+		/** L'écart entre les deux bornes de l'intervalle */
 		val delta = max - min
 	}
 
-	/** Simulation result */
+	/** Résulat d'une simulation pour une valeur */
 	case class Result(mean: Double, sd: Double, ci: ConfidenceInterval)
 
-	/** Computes statistics for a sequence of realizations */
+	/**
+	  * Effectue les calculs statistiques pour fabriquer une instance à partir
+	  * d'une suite de réalitions.
+	  */
 	def stats(realizations: Seq[Double]): Result = {
-		// Sample size
+		// Nombre de réalisations
 		val n = realizations.length
 
-		// Sample mean
+		// Moyenne
 		val mean = realizations.mean
 
-		// Standard deviation estimation
+		// Estimation de l'écart-type
 		val s = realizations.stdev(mean)
 
-		// One half of the confidence interval
-		// Using z* instead of t* because it's easier
+		// Un demi-intervalle de confiance
 		val d = z95 * (s / Math.sqrt(n))
 
 		Result(mean, s, ConfidenceInterval(mean - d, mean + d))
 	}
 
-	/** Computes n realizations of a random variable and returns the mean and half confidence interval */
+	/**
+	  * Produit un résultat de simulation basé sur n réalisation d'une variable aléatoire.
+	  *
+	  * @param n       nombre de réalisation à calculer
+	  * @param compute fonction sans paramètre générant des réalisations
+	  */
 	def run(n: Int)(compute: => Double): Result = stats(for (i <- 1 to n) yield compute)
 
-	/** Computes n realizations of a m random variables and returns the mean and half confidence interval */
+	/**
+	  * Produit plusieurs résultats de simulation basé sur n réalisation
+	  * de plusieurs variables aléatoires.
+	  *
+	  * @param n       nombre de réalisation à calculer
+	  * @param compute fonction sans paramètre générant des réalisations
+	  *                chaque élément de la séquence générée correspond à une variable aléatoire
+	  */
 	def multirun(n: Int)(compute: => Seq[Double]): Seq[Result] = {
-		// Generate n realizations
+		// Génération de réalisations
 		val results = for (i <- 1 to n) yield compute
 
-		// Transpose seq of realizations of seq of variables
-		// to seq of realizations for each variable
+		// Transpose la séquence pour obtenir une séquence par variable aléatoire
 		val variables = results.transpose
 
-		// Compute statistics
+		// Calcul des statistiques pour chaque variable indépendament
 		variables.map(stats)
 	}
 }

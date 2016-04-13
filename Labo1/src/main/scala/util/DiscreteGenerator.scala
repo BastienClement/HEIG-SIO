@@ -6,18 +6,45 @@ import gen.RealizationGenerator
 import java.util.ArrayDeque
 import util.DiscreteGenerator.Law
 
+/**
+  * Objet companion de la classe DiscreteGenerator
+  * Equivalent à des méthodes static en Java / C++
+  */
 object DiscreteGenerator {
+	/**
+	  * Une loi discrète est définie comme une séquence de réalisations possibles
+	  * associées à des probabilités individuelles.
+	  *
+	  * @tparam T le type des réalisations de cette loi
+	  */
 	type Law[T] = Seq[(Double, T)]
 
+	/**
+	  * Fabrique un générateur discret sur la base d'une définition de fonction.
+	  * Le générateur produira des réalisations qui sont des tranches de la fonction,
+	  * avec des probabilités suivant la `sliceLaw` définie dans la fonction.
+	  *
+	  * @param fd     la définition de fonction à utiliser
+	  * @param random la source d'aléatoire à utiliser
+	  */
 	def ofFunctionSlices(fd: FunctionDefinition)(implicit random: ExtendedRandom): DiscreteGenerator[Slice] =
 		new DiscreteGenerator(fd.slicesLaw)
 }
 
 /**
-  * Constructs a discrete number generator following the given probability table.
-  * Based on the Alias Method:
+  * Un générateur de réalisation d'une variable aléatoire discrète.
+  *
+  * L'implémentation est basée sur la méthode de l'alias qui permet la génération
+  * d'une réalisation avec un temps constant.
+  *
+  * Une bonne explication de la méthode est disponible sur:
   * - http://www.keithschwarz.com/darts-dice-coins/
+  *
+  * Le même site propose également une implémentation Java de la méthode que j'ai
+  * adapté pour Scala et réutilisé directement. Le code source est disponible sur:
   * - http://www.keithschwarz.com/interesting/code/?dir=alias-method
+  *
+  * Les commentaires sont recopiés à l'identique.
   */
 class DiscreteGenerator[T](val law: Law[T])(implicit random: ExtendedRandom) extends RealizationGenerator[T] {
 	if (!law.hasDefiniteSize) throw new IllegalArgumentException("The law table must have a finite length")
