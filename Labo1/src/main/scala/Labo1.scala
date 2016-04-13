@@ -38,7 +38,7 @@ object Labo1 extends App {
 		// - Au moins deux points
 		// - YMax strictement positif
 		// - Pas plus de points que ce qui est possible de placer
-		if (n < 2 || ymax < 1 || n > a - b + 1) throw new IllegalArgumentException
+		if (n < 2 || ymax < 1 || b <= a || n > b - a + 1) throw new IllegalArgumentException
 
 		// On génère un flux infini de valeur x potentielles
 		// a et b sont garantis d'en faire partie
@@ -83,7 +83,7 @@ object Labo1 extends App {
 	  */
 	def craftSuitableFunction(ratio: Double): FunctionDefinition = {
 		implicit val rand = new Random() with ExtendedRandom
-		craftFunctionWithRatio(8, 2, 8, 1, 9, ratio - 0.05, ratio + 0.05)
+		craftFunctionWithRatio(10, 0, 15, 0, 15, ratio - 0.05, ratio + 0.05)
 	}
 
 	/** Fabrique un générateur HitMiss associé à une instance de la source d'aléatoire par défaut */

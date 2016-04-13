@@ -48,5 +48,5 @@ object Labo1Tests extends App {
 	)
 
 	warmup()
-	Vector(one, two, three, four).foreach(benchmarkFunction(_, 10000, 100000))
+	Vector(one, two, three, four).foreach(benchmarkFunction(_, 10000, 1000000))
 }
