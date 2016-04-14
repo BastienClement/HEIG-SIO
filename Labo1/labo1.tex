@@ -110,6 +110,10 @@ Ce générateur produit donc des réalisations en temps $O(1)$.
 
 \subsection{Fonction inverse {\normalfont({\tt InverseGenerator})}}
 
+Cette dernière approche réutilise le concept de sélection de tranche de l'algorithme précédent mais utilise la méthode développée au point $1.e$ du TP1: une fois la tranche choisie, l'inverse de la fonction de répartition associée à la variable aléatoire définie par la tranche est utilisée pour produire une réalisation en temps constant.
+
+Comme expliqué dans le TP1, un cas particulier se présente lorsque la section de la fonction correspond à une tranche uniforme. Dans ce cas, l'algorithme équivaut à la génération d'une uniforme entre les deux bornes de la tranche. 
+
 \section{Compilation et exécution}
 
 \section{Validation des implémentations}

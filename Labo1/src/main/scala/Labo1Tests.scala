@@ -47,6 +47,15 @@ object Labo1Tests extends App {
 		20 -> 9
 	)
 
+	def argument(idx: Int, default: Int) =
+		if (args.length >= idx + 1) Integer.valueOf(args(idx)).intValue()
+		else default
+
+	val iter = argument(0, 10000)
+	val count = argument(1, 1000000)
+	val parallel = argument(2, 1) == 1
+	val seed = argument(3, 42)
+
 	warmup()
-	Vector(one, two, three, four).foreach(benchmarkFunction(_, 10000, 1000000))
+	Vector(one, two, three, four).foreach(fn => benchmarkFunction(fn, iter, count, parallel, seed))
 }

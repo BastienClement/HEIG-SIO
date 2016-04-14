@@ -8,12 +8,12 @@ import util.{ExtendedRandom, MonteCarlo, StatsOps, Timer}
 /**
   * Utilitaires de test liés au Labo1
   */
-object Labo1 extends App {
+object Labo1 {
 	/**
 	  * Construit un objet ExtendedRandom à partir d'un Random Java initialisé
 	  * avec une graine spécifique.
 	  */
-	def defaultRandom: ExtendedRandom = new Random(42) with ExtendedRandom
+	def defaultRandom(seed: Int): ExtendedRandom = new Random(seed) with ExtendedRandom
 
 	/**
 	  * Calcul le ratio de l'aire de la fonction par rapport à l'aire du
@@ -87,20 +87,20 @@ object Labo1 extends App {
 	}
 
 	/** Fabrique un générateur HitMiss associé à une instance de la source d'aléatoire par défaut */
-	def hmg(fd: FunctionDefinition) = {
-		implicit val rand = defaultRandom
+	def hmg(seed: Int)(fd: FunctionDefinition) = {
+		implicit val rand = defaultRandom(seed)
 		new HitMissGenerator(fd)
 	}
 
 	/** Fabrique un générateur Geometric associé à une instance de la source d'aléatoire par défaut */
-	def geg(fd: FunctionDefinition) = {
-		implicit val rand = defaultRandom
+	def geg(seed: Int)(fd: FunctionDefinition) = {
+		implicit val rand = defaultRandom(seed)
 		new GeometricGenerator(fd)
 	}
 
 	/** Fabrique un générateur Inverse associé à une instance de la source d'aléatoire par défaut */
-	def ing(fd: FunctionDefinition) = {
-		implicit val rand = defaultRandom
+	def ing(seed: Int)(fd: FunctionDefinition) = {
+		implicit val rand = defaultRandom(seed)
 		new InverseGenerator(fd)
 	}
 
@@ -111,9 +111,9 @@ object Labo1 extends App {
 		val count = 1000000
 		for (i <- 1 to 100) {
 			val fd = craftSuitableFunction(0.5)
-			hmg(fd).produce(count)
-			geg(fd).produce(count)
-			ing(fd).produce(count)
+			hmg(i)(fd).produce(count)
+			geg(i)(fd).produce(count)
+			ing(i)(fd).produce(count)
 		}
 	}
 
@@ -125,7 +125,7 @@ object Labo1 extends App {
 	  * @param count    le nombre de valeurs à générer à chaque itération
 	  * @param parallel indique si les trois générateurs doivent être testés en parallèle
 	  */
-	def benchmarkFunction(fd: FunctionDefinition, runs: Int = 10000, count: Int = 100000, parallel: Boolean = true) = {
+	def benchmarkFunction(fd: FunctionDefinition, runs: Int = 10000, count: Int = 100000, parallel: Boolean = true, seed: Int = 42) = {
 		println("\nTesting function:")
 
 		// Affichage des points composant la fonction
@@ -146,7 +146,7 @@ object Labo1 extends App {
 		val timer = new Timer
 
 		// La séquence de générateurs à tester
-		val generators = Seq(hmg _, geg _, ing _)
+		val generators = Seq(hmg(seed) _, geg(seed) _, ing(seed) _)
 
 		// Test de chaque générateur, séquentiellement ou parallèlement, et génération
 		// d'une table de resultat textuelle.
