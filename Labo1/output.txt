@@ -6,7 +6,7 @@ Testing function:
 
 Sampling: 10000 x 1000000
 
-Mathematical expected value: 10.0
+Expected value: 10.0
 Function area ratio: 1.0
 
 HitMissGenerator: OK
@@ -35,7 +35,7 @@ Testing function:
 
 Sampling: 10000 x 1000000
 
-Mathematical expected value: 8.5
+Expected value: 8.5
 Function area ratio: 0.38461538461538464
 
 HitMissGenerator: OK
@@ -64,7 +64,7 @@ Testing function:
 
 Sampling: 10000 x 1000000
 
-Mathematical expected value: 10.75796178343949
+Expected value: 10.75796178343949
 Function area ratio: 0.8722222222222222
 
 HitMissGenerator: OK
@@ -93,7 +93,7 @@ Testing function:
 
 Sampling: 10000 x 1000000
 
-Mathematical expected value: 10.261648745519715
+Expected value: 10.261648745519715
 Function area ratio: 0.25833333333333336
 
 HitMissGenerator: OK

@@ -135,11 +135,11 @@ object Labo1 {
 		// Nombre d'itération et nombre de valeurs par itération
 		println(s"\nSampling: $runs x $count")
 
-		// Calcul de l'espérance mathématique et du ratio de l'aire de la fonction
+		// Calcul de l'espérance théorique et du ratio de l'aire de la fonction
 		val mev = fd.expectedValue
 		val ratio = areaRatio(fd)
 
-		println("\nMathematical expected value: " + mev)
+		println("\nExpected value: " + mev)
 		println("Function area ratio: " + ratio + "\n")
 
 		// Timer global pour le processus de benchmarking
