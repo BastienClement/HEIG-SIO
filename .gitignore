@@ -2,3 +2,7 @@
 **/.idea/tasks.xml
 **/.idea/libraries/SBT*
 target/
+*.aux
+*.log
+*.synctex.gz
+*.toc

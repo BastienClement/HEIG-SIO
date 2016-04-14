@@ -1,0 +1,235 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[]{graphicx}
+\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+
+\usepackage{geometry}
+\geometry{verbose,tmargin=2cm,bmargin=2cm,lmargin=2cm,rmargin=2cm}
+\usepackage{enumerate}
+\usepackage[T1]{fontenc}      
+\usepackage[utf8]{inputenc} 
+\usepackage[frenchb]{babel}  
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{parskip}
+\usepackage{listings}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\pagestyle{fancy}
+\linespread{1.1}
+
+\newcounter{numero}
+\newcommand{\exo}{
+	{\large
+		\vspace{5mm}
+		\addtocounter{numero}{1}
+		{\bf Problème~\thenumero}
+		\vspace{2mm}
+	}
+}
+
+\newcommand{\point}[2]{
+	\vspace{0.2mm}
+	\begin{enumerate}[\indent #1)]
+	\item {\em #2}
+	\end{enumerate}
+}
+
+\newcommand{\tab}{\hspace{1em}}
+
+\newcommand{\algo}[2]{
+	\fbox{\parbox{16.75cm}{
+	\vspace{2mm}
+	{\bf \hspace{0mm} #1}
+	\vspace{1mm}
+	\begin{enumerate}[\hspace{5mm}1 ]
+		\ttfamily
+		#2
+	\end{enumerate}
+	\vspace{0.5mm}}}
+}
+
+\pgfplotsset{compat=1.8}
+
+\fancyhead[L]{\footnotesize SIO - TP1}
+\fancyhead[R]{Bastien Clément}
+\fancyfoot[C]{\thepage}
+\thispagestyle{empty} % Pour ne pas avoir de header/footer sur la premiÃ¨re page
+
+\begin{document}
+	
+{\sc HEIG--VD} \hfill Bastien Clément\newline 
+Simulation et Optimisation \hfill \today \newline
+\hrule
+\vspace{2mm}
+{\large \bf Rapport~: Génération de variables aléatoires} \hfill {\large \bf Travail pratique~1}
+\vspace{4mm}
+\hrule
+
+\tableofcontents
+
+\section{Introduction}
+
+L'objectif de ce premier laboratoire est d'implémenter différents algorithmes de génération de variables aléatoires utilisant des fonctions affine-par-morceaux comme fonctions de densité. Ce TP reprend de nombreux points du dernier Travail Personnel et les algorithmes à implémenter sont entièrement basés sur les résultats obtenus lors du travail précédent.
+
+Le langage et les choix d'implémentation sont laissés libres. Dans mon cas, j'ai opté pour une approche mixe orientée-objet/fonctionnelle avec le langage Scala. De cette façon, j'ai pu profiter du concept d'objets pour définir les éléments de base du programme (Fonctions, Tranches, Générateurs) et utiliser une approche fonctionnelle pour exprimer les opérations sur les résultats sous forme de \emph{pipeline} de transformations à appliquer.
+
+Les différents algorithmes ont ensuite été testés sur l'ensemble des fonctions fournies. Dans le cas des données présentées dans ce rapport, chaque test est composés de 10'000 mesures, elles mêmes composées de 1'000'000 générations de réalisation de la variable aléatoire.
+
+Les tests ont été effectués sur une machine équipée d'un processeur \emph{Intel Core i5-1234k} à 3.57 GHz avec 16 GB de RAM et exécutant Windows 10 et Java 8.0.
+
+Ces tests étant relativement longs, j'ai choisi de tester chaque fois les 3 algorithmes en parallèle. Ceux-ci ne partageant aucune information, la concurrence n'était donc pas un problème. De plus, j'ai pris soin de définir la priorité maximale disponible pour le processus de test ainsi que de vérifier qu'aucun autre processus n'était susceptible d'utiliser le processeur le temps des tests. Ce dernier n'étant utilisé qu'à 75\% (4 coeurs / 3 threads), je ne m'attends pas à des répercussions sur les mesures de temps.
+
+\section{Algorithmes implémentés}
+
+\subsection{Acceptation-rejet {\normalfont({\tt HitMissGenerator})}}
+
+Un algorithme basé sur l'approche \emph{bête et méchante} développée au point $2.a$ du TP1.
+
+Un point $(x, y)$ est généré uniformément dans le rectangle $[a, b]\times[0,y_{max}]$. S'il se trouve sous la courbe de $f$, $x$ est retourné, sinon un nouveau point est généré jusqu'à ce que la condition soit vérifiée.
+
+Chaque coup possède une chance $r = \frac{\int_{a}^{b}f(x)}{(b-a) y_{max}}$ égale au ratio de l'aire de la fonction par rapport à l'aire du rectangle encadrant de tomber sous la courbe de la fonction. Nous pouvons donc espérer, en moyenne, obtenir un résultat après $1/r$ essais.
+
+\subsection{Géométrique {\normalfont({\tt GeometricGenerator})}}
+
+Une approche basées sur la méthode des mélanges et une base d'acceptation-rejet. Dans le cas d'un rejet, les propriétés géométriques du problème peuvent être utilisées pour obtenir en temps constant une solution alternative valide. L'idée est développée dans le point $2.b$ du TP1.
+
+Dans un premier temps, une tranche de la fonction est choisie aléatoirement avec une probabilité égale au rapport entre l'aire de la tranche et l'aire de la fonction dans son ensemble.
+
+Par la suite, un point $(x, y)$ est généré uniformément dans le rectangle $[a, b]\times[0,y_0+y_1]$. Si le point tombe sous la courbe de la fonction, $x$ est retourné, dans le cas contraire, une symétrie est appliquée pour obtenir un point sous la courbe. 
+
+Ici, nous avons une complexité en $O(1 + a)$, avec $a$ la complexité de choisir une tranche aléatoirement. Dans le cadre du cours, nous avons vu un algorithme en $O(n)$ avec $n$ le nombre de tranches.
+
+Une méthode alternative (la \emph{méthode de l'alias}), permettant de produire un choix en temps constant a été mentionnée à de nombreuses occasions. En recherchant d'avantage d'informations, j'ai pu trouver une très bonne explication accompagnée d'une implémentation Java de l'algorithme que j'ai pu réutiliser. Plus de détails sont disponibles dans le fichier \texttt{DiscreteGenerator.scala}.
+
+Ce générateur produit donc des réalisations en temps $O(1)$.
+
+\subsection{Fonction inverse {\normalfont({\tt InverseGenerator})}}
+
+\section{Compilation et exécution}
+
+\section{Validation des implémentations}
+
+Dans un premier temps, nous nous intéresserons l'espérance d'une variable aléatoire générée en utilisant nos différentes fonctions comme fonctions de densité.
+
+Pour chaque fonction, nous calculerons la densité attendue de façon purement mathématique. Nous effectuerons ensuite 
+
+\section{Temps de génération}
+
+\subsection{Résultats}
+
+\begin{center}
+\bgroup
+\def\arraystretch{1.2}
+\begin{tabular}{|llcccc|}
+	\hline
+	\textbf{Fonction} & \textbf{Algorithme} & \textbf{Moyenne} & \textbf{Écart-type} & \textbf{IC$_{95\%}$} & \textbf{$\Delta$}\\
+	\hline
+	
+	\hline
+	& Acceptation-rejet & 53.552590 & 7.041156 & [53.414584; 53.690597] & 0.276013\\
+	Uniforme & Géométrique &  92.319710 & 8.157461 & [92.159824; 92.479596] &     0.319772\\
+	& Fonction inverse & 61.869008 & 7.200549 & [61.727877; 62.010139] & 0.282262\\
+	 		
+ 	\hline
+ 	& Acceptation-rejet & 137.81593 & 7.751517 & [137.66405; 137.96864] & 0.303859\\
+ 	Triangulaire & Géométrique &  96.373801 & 7.497934 & [96.226841; 96.520760] & 0.293919\\
+ 	& Fonction inverse & 73.564317 & 7.159326 & [73.423994; 73.704640] & 0.280646\\
+ 	
+ 	\hline
+ 	& Acceptation-rejet & 65.621054 & 7.580608 & [65.472475; 65.769634] & 0.297160\\
+ 	Plat & Géométrique &  94.995949 & 7.540267 & [94.848160; 95.143738] & 0.295578\\
+ 	& Fonction inverse & 71.114322 & 7.598602 & [70.965389; 71.263254] & 0.297865\\
+ 	
+ 	\hline
+ 	& Acceptation-rejet & 208.38447 & 8.445177 & [208.21894; 208.54999] & 0.331051\\
+ 	Accidenté & Géométrique & 95.905446 & 6.879117 & [95.770616; 96.040277] & 0.269661\\
+ 	& Fonction inverse & 74.447486 & 6.724518 & [74.315685; 74.579286] & 0.263601\\
+ 	
+	\hline
+\end{tabular}
+\egroup
+\end{center}
+
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[
+title = {\bf Temps de génération pour 1'000'000 valeurs},
+width=10cm,
+xtick={1,...,4},
+xticklabels={%
+	Uniforme,
+	Triangulaire,
+	Plat,
+	Accidenté},
+grid=major,
+ybar,
+legend style={at={(1.05,0.5)},anchor=west},
+xlabel={Fonction utilisée},
+ylabel={Temps (ms)}
+]
+
+\addplot[
+fill=blue!25,
+draw=black,
+point meta=y,
+every node near coord/.style={inner ysep=5pt},
+error bars/.cd,
+y dir=both,
+y explicit
+] 
+table [y error=error] {
+	x   y           error    label
+	1   53.552590   0.276013 1 
+	2   137.815935  0.303859 2
+	3   65.621054   0.297160 3
+	4   208.384474  0.331051 4
+};
+\addlegendentry{Acceptation-rejet}
+
+\addplot[
+fill=red!25,
+draw=black,
+point meta=y,
+every node near coord/.style={inner ysep=5pt},
+error bars/.cd,
+y dir=both,
+y explicit
+] 
+table [y error=error] {
+	x   y           error    label
+	1   92.319710   0.319772 1
+	2   96.373801   0.293919 2
+	3   94.995949   0.295578 3
+	4   95.905446   0.269661 4
+};
+\addlegendentry{Géométrique}
+
+\addplot[
+fill=green!25,
+draw=black,
+point meta=y,
+every node near coord/.style={inner ysep=5pt},
+error bars/.cd,
+y dir=both,
+y explicit
+] 
+table [y error=error] {
+	x   y           error    label
+	1   61.869008   0.282262 1
+	2   73.564317   0.280646 2
+	3   71.114322   0.297865 3
+	4   74.447486   0.263601 4
+};
+\addlegendentry{Fonction inverse}
+
+\draw ({rel axis cs:0,0}|-{axis cs:0,0}) -- ({rel axis cs:1,0}|-{axis cs:0,0});
+\end{axis}
+\end{tikzpicture}
+\end{center}
+
+\end{document}
