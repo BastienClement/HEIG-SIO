@@ -7,7 +7,7 @@ import java.util.Random
   */
 trait ExtendedRandom extends Random {
 	/** Génère un double entre [origin; bound[ */
-	@inline def nextDouble(origin: Double, bound: Double): Double = {
+	@inline final def nextDouble(origin: Double, bound: Double): Double = {
 		val r = nextDouble() * (bound - origin) + origin
 
 		// Possible erreur liée à l'imprécision des doubles
@@ -16,5 +16,5 @@ trait ExtendedRandom extends Random {
 	}
 
 	/** Génère un entier entre [origin; bound[ */
-	def nextInt(origin: Int, bound: Int): Int = nextInt(bound - origin) + origin
+	@inline final def nextInt(origin: Int, bound: Int): Int = nextInt(bound - origin) + origin
 }
