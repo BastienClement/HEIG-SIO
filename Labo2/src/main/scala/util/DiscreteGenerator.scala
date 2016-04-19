@@ -1,7 +1,7 @@
 package util
 
-import func.FunctionDefinition
-import func.FunctionDefinition.Slice
+import func.PiecewiseAffineFunction
+import func.PiecewiseAffineFunction.Slice
 import gen.RealizationGenerator
 import java.util.ArrayDeque
 import util.DiscreteGenerator.Law
@@ -27,7 +27,7 @@ object DiscreteGenerator {
 	  * @param fd     la définition de fonction à utiliser
 	  * @param random la source d'aléatoire à utiliser
 	  */
-	def ofFunctionSlices(fd: FunctionDefinition)(implicit random: ExtendedRandom): DiscreteGenerator[Slice] =
+	def ofFunctionSlices(fd: PiecewiseAffineFunction)(implicit random: ExtendedRandom): DiscreteGenerator[Slice] =
 		new DiscreteGenerator(fd.slicesLaw)
 }
 

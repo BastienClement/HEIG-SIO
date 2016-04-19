@@ -1,5 +1,5 @@
-import func.FunctionDefinition
-import func.FunctionDefinition.Slice
+import func.PiecewiseAffineFunction
+import func.PiecewiseAffineFunction.Slice
 import gen.{GeometricGenerator, HitMissGenerator, InverseGenerator}
 import java.util.Random
 import scala.annotation.tailrec
@@ -19,7 +19,7 @@ object Labo1 {
 	  * Calcul le ratio de l'aire de la fonction par rapport à l'aire du
 	  * rectangle encadrant.
 	  */
-	def areaRatio(fd: FunctionDefinition): Double = fd.area / (fd.ym * (fd.b - fd.a))
+	def areaRatio(fd: PiecewiseAffineFunction): Double = fd.area / (fd.ym * (fd.b - fd.a))
 
 	/**
 	  * Fabrique aléatoirement une fonction correspondant aux paramètres demandés.
@@ -33,7 +33,7 @@ object Labo1 {
 	  */
 	@tailrec
 	def craftFunction(n: Int, ymin: Int, ymax: Int, a: Int, b: Int)
-	                 (implicit random: ExtendedRandom): FunctionDefinition = {
+	                 (implicit random: ExtendedRandom): PiecewiseAffineFunction = {
 		// On s'assure que les paramètre soient sensés
 		// - Au moins deux points
 		// - YMax strictement positif
@@ -50,7 +50,7 @@ object Labo1 {
 
 		// On vérifie que la fonction est valide (au moins un y non-nul)
 		// Si ce n'est pas le cas, on recommence
-		if (points.exists { case (_, y) => y != 0 }) FunctionDefinition(points)
+		if (points.exists { case (_, y) => y != 0 }) PiecewiseAffineFunction(points)
 		else craftFunction(n, ymin, ymax, a, b)
 	}
 
@@ -70,7 +70,7 @@ object Labo1 {
 	  */
 	@tailrec
 	def craftFunctionWithRatio(n: Int, ymin: Int, ymax: Int, a: Int, b: Int, rmin: Double, rmax: Double)
-	                          (implicit random: ExtendedRandom): FunctionDefinition = {
+	                          (implicit random: ExtendedRandom): PiecewiseAffineFunction = {
 		val fd = craftFunction(n, ymin, ymax, a, b)
 		val ratio = areaRatio(fd)
 
@@ -81,25 +81,25 @@ object Labo1 {
 	/**
 	  * Fabrique aléatoirement une fonction adéquate avec un ratio d'aire donné.
 	  */
-	def craftSuitableFunction(ratio: Double): FunctionDefinition = {
+	def craftSuitableFunction(ratio: Double): PiecewiseAffineFunction = {
 		implicit val rand = new Random() with ExtendedRandom
 		craftFunctionWithRatio(10, 0, 15, 0, 15, ratio - 0.05, ratio + 0.05)
 	}
 
 	/** Fabrique un générateur HitMiss associé à une instance de la source d'aléatoire par défaut */
-	def hmg(seed: Int)(fd: FunctionDefinition) = {
+	def hmg(seed: Int)(fd: PiecewiseAffineFunction) = {
 		implicit val rand = defaultRandom(seed)
 		new HitMissGenerator(fd)
 	}
 
 	/** Fabrique un générateur Geometric associé à une instance de la source d'aléatoire par défaut */
-	def geg(seed: Int)(fd: FunctionDefinition) = {
+	def geg(seed: Int)(fd: PiecewiseAffineFunction) = {
 		implicit val rand = defaultRandom(seed)
 		new GeometricGenerator(fd)
 	}
 
 	/** Fabrique un générateur Inverse associé à une instance de la source d'aléatoire par défaut */
-	def ing(seed: Int)(fd: FunctionDefinition) = {
+	def ing(seed: Int)(fd: PiecewiseAffineFunction) = {
 		implicit val rand = defaultRandom(seed)
 		new InverseGenerator(fd)
 	}
@@ -125,7 +125,7 @@ object Labo1 {
 	  * @param count    le nombre de valeurs à générer à chaque itération
 	  * @param parallel indique si les trois générateurs doivent être testés en parallèle
 	  */
-	def benchmarkFunction(fd: FunctionDefinition, runs: Int = 10000, count: Int = 100000, parallel: Boolean = true, seed: Int = 42) = {
+	def benchmarkFunction(fd: PiecewiseAffineFunction, runs: Int = 10000, count: Int = 100000, parallel: Boolean = true, seed: Int = 42) = {
 		println("\nTesting function:")
 
 		// Affichage des points composant la fonction

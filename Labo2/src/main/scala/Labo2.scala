@@ -1,20 +1,22 @@
-import util.MonteCarlo
+import java.util.Random
+import sampler.ImportanceSampler
+import util.{ExtendedRandom, Timer}
 
 /**
   * Created by galedric on 18.04.16.
   */
 object Labo2 extends App {
 	def g(x: Double) = (25 + x * (x - 6) * (x - 8) * (x - 14) / 25) * Math.pow(Math.E, Math.sqrt(1 + Math.cos(x * x / 10)))
+
 	val a = 0
 	val b = 15
-	val rand = Labo1.defaultRandom(42)
-	val points = 1000000
 
-	val G = MonteCarlo.run(100) {
-		val avg = Stream.continually(g(rand.nextDouble(a, b))).take(points).sum / points
-		avg * (b - a)
-	}
+	//implicit val rand = Labo1.defaultRandom(42)
+	implicit val rand = new Random(2016) with ExtendedRandom
+	val n = 100000000
 
-	println(G)
-	println(G.ci.max - G.ci.min)
+	val timer = new Timer
+	val sampler = new ImportanceSampler(g, 10)
+	println(sampler(a, b, n))
+	println(timer.time / 1000 + " sec")
 }

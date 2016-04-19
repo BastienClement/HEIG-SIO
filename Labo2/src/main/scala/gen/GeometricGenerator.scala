@@ -1,6 +1,6 @@
 package gen
 
-import func.FunctionDefinition
+import func.PiecewiseAffineFunction
 import util.{DiscreteGenerator, ExtendedRandom}
 
 /**
@@ -9,7 +9,7 @@ import util.{DiscreteGenerator, ExtendedRandom}
   * essai manqué pour garantir un temps d'execution constant.
   * Basé sur la réponse à la question 2.b du TP1.
   */
-class GeometricGenerator(fd: FunctionDefinition)(implicit random: ExtendedRandom) extends RealizationGenerator[Double] {
+class GeometricGenerator(fd: PiecewiseAffineFunction)(implicit random: ExtendedRandom) extends RealizationGenerator[Double] {
 	/** Générateur discret de tranches de la fonction */
 	val sg = DiscreteGenerator.ofFunctionSlices(fd)
 
@@ -23,7 +23,7 @@ class GeometricGenerator(fd: FunctionDefinition)(implicit random: ExtendedRandom
 
 		// Si (a, b) est sous la courbe de la fonction, on retourne a directement,
 		// sinon on prend le point symétrique pour récupérer un échec.
-		if (b <= slice.evaluate(a)) a
+		if (b <= slice(a)) a
 		else slice.x1 - (a - slice.x0)
 	}
 }

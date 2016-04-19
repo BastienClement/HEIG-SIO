@@ -1,6 +1,6 @@
 package gen
 
-import func.FunctionDefinition
+import func.PiecewiseAffineFunction
 import util.{DiscreteGenerator, ExtendedRandom}
 
 /**
@@ -9,7 +9,7 @@ import util.{DiscreteGenerator, ExtendedRandom}
   * réalisation en temps constant.
   * Basé sur les réponses à la question 1.e du TP1.
   */
-class InverseGenerator(fd: FunctionDefinition)(implicit random: ExtendedRandom) extends RealizationGenerator[Double] {
+class InverseGenerator(fd: PiecewiseAffineFunction)(implicit random: ExtendedRandom) extends RealizationGenerator[Double] {
 	/** Générateur discret de tranches de la fonction */
 	val sg = DiscreteGenerator.ofFunctionSlices(fd)
 

@@ -1,6 +1,6 @@
 package func
 
-import func.FunctionDefinition.Slice
+import func.PiecewiseAffineFunction.Slice
 import scala.annotation.tailrec
 import util.DiscreteGenerator.Law
 import util.NumericToDouble
@@ -8,16 +8,16 @@ import util.NumericToDouble
 /**
   * Objet compagnion pour la classe FunctionDefinition
   */
-object FunctionDefinition {
+object PiecewiseAffineFunction {
 	/**
 	  * Constructeur prenant comme paramètres un nombre variable de points
 	  */
-	def apply[T: Numeric, U: Numeric](points: (T, U)*) = new FunctionDefinition(slicesFromPoints(points))
+	def apply[T: Numeric, U: Numeric](points: (T, U)*) = new PiecewiseAffineFunction(slicesFromPoints(points))
 
 	/**
 	  * Constructeur prenant comme paramètre une séquence de points à utiliser
 	  */
-	def apply[T: Numeric, U: Numeric](slices: TraversableOnce[(T, U)]) = new FunctionDefinition(slicesFromPoints(slices))
+	def apply[T: Numeric, U: Numeric](slices: TraversableOnce[(T, U)]) = new PiecewiseAffineFunction(slicesFromPoints(slices))
 
 	/**
 	  * Construit un tableau de Slice à partir d'une liste de points.
@@ -81,7 +81,7 @@ object FunctionDefinition {
 		  * Cette méthode ne doit pas être appelée avec des valeurs de x en dehors
 		  * de la tranche.
 		  */
-		def evaluate(x: Double) = m * (x - x0) + y0
+		def apply(x: Double) = m * (x - x0) + y0
 	}
 
 }
@@ -93,7 +93,7 @@ object FunctionDefinition {
   *
   * @param slices les tranches de la fonction
   */
-class FunctionDefinition private(val slices: Array[Slice]) {
+class PiecewiseAffineFunction private(val slices: Array[Slice]) {
 	// Au moins une tranche est définie
 	if (slices.length < 1) throw new IllegalArgumentException("Function definition requires at least one slice")
 
@@ -151,5 +151,22 @@ class FunctionDefinition private(val slices: Array[Slice]) {
 	/**
 	  * Evalue la fonction pour une valeur de x donnée.
 	  */
-	def evaluate(x: Double) = sliceFor(x).evaluate(x)
+	def apply(x: Double) = sliceFor(x).apply(x)
+
+	/**
+	  * Returns a new FunctionDefinition (proportional to this one) with an area of 1,
+	  * suitable to be used as a density function.
+	  */
+	lazy val proportionalDensity: PiecewiseAffineFunction = {
+		/**
+		  * Scales a slice of this function by the area of this function.
+		  * In practice, we create a new slice with scaled y0 and y1 values.
+		  */
+		def scaleSlice(slice: Slice) = slice.copy(y0 = slice.y0 / area, y1 = slice.y1 / area)
+
+		new PiecewiseAffineFunction(slices.map(scaleSlice)) {
+			// Return the same object, since the function is already a density function. :)
+			override lazy val proportionalDensity: PiecewiseAffineFunction = this
+		}
+	}
 }

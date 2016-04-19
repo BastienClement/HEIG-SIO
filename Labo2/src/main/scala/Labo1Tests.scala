@@ -1,18 +1,18 @@
 import Labo1._
-import func.FunctionDefinition
+import func.PiecewiseAffineFunction
 
 /**
   * Tests des fonctions données en exemple
   */
 object Labo1Tests extends App {
 	/** Uniforme */
-	val one = FunctionDefinition(
+	val one = PiecewiseAffineFunction(
 		5 -> 1,
 		15 -> 1
 	)
 
 	/** Double triangulaire */
-	val two = FunctionDefinition(
+	val two = PiecewiseAffineFunction(
 		2 -> 0,
 		3 -> 1,
 		7 -> 0,
@@ -22,7 +22,7 @@ object Labo1Tests extends App {
 	)
 
 	/** Profil plat */
-	val three = FunctionDefinition(
+	val three = PiecewiseAffineFunction(
 		2 -> 8,
 		4 -> 10,
 		7 -> 10,
@@ -34,7 +34,7 @@ object Labo1Tests extends App {
 	)
 
 	/** Profil accidenté */
-	val four = FunctionDefinition(
+	val four = PiecewiseAffineFunction(
 		2 -> 1,
 		3 -> 10,
 		5 -> 0,
