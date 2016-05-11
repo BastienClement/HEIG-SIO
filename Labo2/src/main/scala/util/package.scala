@@ -8,17 +8,17 @@ package object util {
 		/** Moyenne */
 		@inline def mean: Double = seq.sum / seq.length
 
-		/** Ecart-type */
-		@inline def stdev(mean: Double): Double = {
-			val sum = seq.foldLeft(0.0) { (acc, xk) =>
-				val dk = xk - mean
+		/** Variance */
+		@inline def variance: Double = {
+			val m = mean
+			seq.foldLeft(0.0) { (acc, xk) =>
+				val dk = xk - m
 				acc + dk * dk
-			}
-			Math.sqrt(sum / seq.length)
+			} / seq.length
 		}
 
 		/** Ecart-type */
-		@inline def stdev: Double = stdev(mean)
+		@inline def stdev: Double = Math.sqrt(variance)
 	}
 
 	/**

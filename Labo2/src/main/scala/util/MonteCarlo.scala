@@ -29,7 +29,7 @@ object MonteCarlo {
 		val mean = realizations.mean
 
 		// Estimation de l'écart-type
-		val s = realizations.stdev(mean)
+		val s = realizations.stdev
 
 		// Un demi-intervalle de confiance
 		val d = z95 * (s / Math.sqrt(n))

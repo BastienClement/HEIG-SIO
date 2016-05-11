@@ -1,5 +1,5 @@
 import java.util.Random
-import sampler.ImportanceSampler
+import sampler.ControlSampler
 import util.{ExtendedRandom, Timer}
 
 /**
@@ -16,7 +16,7 @@ object Labo2 extends App {
 	val n = 100000000
 
 	val timer = new Timer
-	val sampler = new ImportanceSampler(g, 10)
+	val sampler = new ControlSampler(g, 10, 10000)
 	println(sampler(a, b, n))
 	println(timer.time / 1000 + " sec")
 }
