@@ -5,7 +5,7 @@ import util.{ExtendedRandom, FunctionSlicer, StatsOps}
 class ControlSampler(g: Double => Double, slices: Int, m: Int)(implicit val rand: ExtendedRandom) extends FunctionSampler {
 	def apply(a: Double, b: Double, n: Int): Interval = {
 		val h = FunctionSlicer.slice(g, a, b, slices)
-		val mu = h.expectedValue
+		val mu = h.area / (b-a) //h.expectedValue
 
 		val (mY, mZ) = Stream.continually(rand.nextDouble(a, b)).take(m).map(x => (g(x), h(x))).toVector.unzip
 

@@ -1,5 +1,5 @@
 import java.util.Random
-import sampler.ControlSampler
+import sampler.{ControlSampler, ImportanceSampler, UniformSampler}
 import util.{ExtendedRandom, Timer}
 
 /**
@@ -12,11 +12,22 @@ object Labo2 extends App {
 	val b = 15
 
 	//implicit val rand = Labo1.defaultRandom(42)
-	implicit val rand = new Random(2016) with ExtendedRandom
+	implicit val rand = new Random with ExtendedRandom
 	val n = 100000000
 
 	val timer = new Timer
-	val sampler = new ControlSampler(g, 10, 10000)
-	println(sampler(a, b, n))
+
+	val sampler1 = new UniformSampler(g)
+	println(sampler1(a, b, n))
+	println(timer.time / 1000 + " sec")
+
+	timer.reset()
+	val sampler2 = new ImportanceSampler(g, 10)
+	println(sampler2(a, b, n))
+	println(timer.time / 1000 + " sec")
+
+	timer.reset()
+	val sampler3 = new ControlSampler(g, 10, 100000)
+	println(sampler3(a, b, n))
 	println(timer.time / 1000 + " sec")
 }
