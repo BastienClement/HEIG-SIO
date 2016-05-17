@@ -1,11 +1,12 @@
 package sampler
 
+import scala.annotation.tailrec
 import util.{ExtendedRandom, FunctionSlicer, StatsOps}
 
-class ControlSampler(g: Double => Double, slices: Int, m: Int)(implicit val rand: ExtendedRandom) extends FunctionSampler {
-	def apply(a: Double, b: Double, n: Int): Interval = {
+class ControlSampler(g: Double => Double, slices: Int = 15, m: Int = 10000)(implicit val rand: ExtendedRandom) extends FunctionSampler {
+	def sample(a: Double, b: Double) = new SamplerInstance {
 		val h = FunctionSlicer.slice(g, a, b, slices)
-		val mu = h.area / (b-a) //h.expectedValue
+		val mu = h.area / (b-a)
 
 		val (mY, mZ) = Stream.continually(rand.nextDouble(a, b)).take(m).map(x => (g(x), h(x))).toVector.unzip
 
@@ -19,20 +20,32 @@ class ControlSampler(g: Double => Double, slices: Int, m: Int)(implicit val rand
 		var Sv = Vks.sum
 		var Qv = Vks.map(vk => vk * vk).sum
 
-		for (_ <- m until n) {
+		var N: Long = m
+
+		def iterations: Long = N
+
+		def interval: Interval = {
+			val V = Sv / N
+			val sigma2 = (Qv / N) - (V * V)
+			val G = (b - a) * V
+			val sG = (b - a) * Math.sqrt(sigma2 / N)
+			Interval(G, N, sG)
+		}
+
+		@tailrec
+		def run(n: Int): SamplerInstance = if (n > 0) {
 			val xk = rand.nextDouble(a, b)
 			val yk = g(xk)
 			val zk = h(xk)
 			val vk = yk + c * (zk  - mu)
 			Sv += vk
 			Qv += vk * vk
+			N += 1
+			run(n - 1)
+		} else {
+			this
 		}
 
-		val V = Sv / n
-		val sigma2 = (Qv / n) - (V * V)
-		val G = (b - a) * V
-		val sG = (b - a) * Math.sqrt(sigma2 / n)
-
-		Interval(G, sG)
+		override def toString = s"${super.toString} [c=$c]"
 	}
 }
