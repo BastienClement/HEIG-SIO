@@ -78,7 +78,7 @@ Simulation et Optimisation \hfill \today \newline
 
 \section{Introduction}
 
-L'objectif de ce second laboratoire et d'estimer l'intégrale définie d'une fonction mathématique (trop complexe pour appliquer les méthodes usuelles d'intégration) en utilisant différentes méthodes de Monte-Carlo et de comparer leur performance.
+L'objectif de ce second laboratoire et d'estimer l'intégrale définie d'une fonction mathématique en implémentant différentes méthodes de Monte-Carlo et de comparer leur performance. Cette méthode est utile lorsque la fonction à intégrer est trop complexe pour permettre l'application des méthodes d'intégration usuelles.
 
 Plus spécifiquement, nous nous intéressons à la fonction
 
@@ -86,33 +86,25 @@ Plus spécifiquement, nous nous intéressons à la fonction
 	g(x) = \left( 25 + \frac{x(x-6)(x-8)(x-14)}{25} \right) e^{\sqrt{1+cos(x^2/10)}}
 \]
 
-et à l'intégrale sur l'intervalle $[0,15]$
+et à son intégrale sur l'intervalle $[0,15]$
 
 \[
-	\int_{0}^{15} g(x) \,dx
+	G = \int_{0}^{15} g(x) \,dx
 \]
 
-L'objectif de ce premier laboratoire est d'implémenter différents algorithmes de génération de variables aléatoires utilisant des fonctions affine-par-morceaux comme fonctions de densité. Ce TP reprend de nombreux points du dernier travail personnel et les algorithmes à implémenter sont entièrement basés sur les résultats obtenus lors du travail précédent.
+De même que pour le travail précédent, les tests ont été effectués sur une machine équipée d'un processeur \emph{Intel Core i5-3570} à 3.57 GHz avec 16 GB de RAM et exécutant Windows 10 et Java 8u91.
 
-Le langage et les choix d'implémentation sont laissés libres. Dans mon cas, j'ai opté pour une approche mixte orientée-objet/fonctionnelle avec le langage Scala. De cette façon, j'ai pu profiter du concept d'objets pour définir les éléments de base du programme (Fonctions, Tranches, Générateurs) et utiliser une approche fonctionnelle pour exprimer les opérations sur les résultats sous forme de \emph{pipeline} de transformations à appliquer.
+\section{Méthodes implémentés}
 
-Les différents algorithmes ont ensuite été testés sur l'ensemble des fonctions fournies. Dans le cas des données présentées dans ce rapport, chaque test est composé de 10'000 mesures, elles-mêmes composées de 1'000'000 de réalisations. L'exécution des tests utilisés dans ce rapport nécessite un peu plus d'une heure et demie. L'archive ZIP fournie contient en plus du fichier \texttt{output.txt} un fichier \texttt{output.fast.txt} proposant des résultats bien plus rapides à générer dans le cas où l'exécution devrait être réitérée.
+\subsection{Échantillonnage uniforme {\normalfont({\tt UniformSampler})}}
 
-Les tests ont été effectués sur une machine équipée d'un processeur \emph{Intel Core i5-3570} à 3.57 GHz avec 16 GB de RAM et exécutant Windows 10 et Java 8u77.
+Cette première approche relativement simple cherche à estimer $G$ en calculant la hauteur moyenne
+\[
+	\bar{Y} = \frac{1}{N} \sum_{k=1}^{N} g(X_k)
+\]
+multipliée par la largeur de l'intervalle d'intégration $(b-a)$.
 
-Ces tests étant relativement longs, j'ai choisi de tester chaque fois les 3 algorithmes en parallèle. Ceux-ci ne partageant aucune information, la concurrence n'était pas un problème. De plus, j'ai pris soin de définir la priorité maximale disponible pour le processus de test ainsi que de vérifier qu'aucun autre processus n'était susceptible d'utiliser le processeur au cours des tests. Ce dernier n'étant utilisé qu'à 75\% (4 coeurs / 3 threads), je ne m'attends pas à ce que le parallélisme implique des répercussions significatives sur les mesures de temps individuelles.
-
-\section{Algorithmes implémentés}
-
-\subsection{Acceptation-rejet {\normalfont({\tt HitMissGenerator})}}
-
-Un algorithme basé sur l'approche \emph{bête et méchante} développée au point $2.a$ du TP1.
-
-Un point $(x, y)$ est généré uniformément dans le rectangle $[a, b]\times[0,y_{max}]$. S'il se trouve sous la courbe de $f$, $x$ est retourné, sinon un nouveau point est généré jusqu'à ce que la condition soit vérifiée.
-
-Chaque coup possède une chance $r = \frac{\int_{a}^{b}f(x)}{(b-a) y_{max}}$ égale au ratio de l'aire de la fonction par rapport à l'aire du rectangle encadrant de tomber sous la courbe de la fonction. Nous pouvons donc espérer, en moyenne, obtenir un résultat après $1/r$ essais.
-
-\subsection{Géométrique {\normalfont({\tt GeometricGenerator})}}
+\subsection{Échantillonnage préférentiel {\normalfont({\tt ImportanceSampler})}}
 
 Une approche basées sur la méthode des mélanges et une base d'acceptation-rejet. Dans le cas d'un rejet, les propriétés géométriques du problème peuvent être utilisées pour obtenir en temps constant une solution alternative valide. L'idée est développée dans le point $2.b$ du TP1.
 
@@ -126,7 +118,7 @@ Une méthode alternative (la \emph{méthode de l'alias}), permettant de produire
 
 Ce générateur produit donc des réalisations en temps $O(1)$.
 
-\subsection{Fonction inverse {\normalfont({\tt InverseGenerator})}}
+\subsection{Échantillonnage avec variable de contrôle {\normalfont({\tt ControlSampler})}}
 
 Cette dernière approche réutilise le concept de sélection de tranche de l'algorithme précédent mais utilise la méthode développée au point $1.e$ du TP1: une fois la tranche choisie, l'inverse de la fonction de répartition associée à la variable aléatoire définie par la tranche est utilisée pour produire une réalisation en temps constant.
 
