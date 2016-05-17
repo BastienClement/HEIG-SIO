@@ -35,6 +35,6 @@ case class Interval(mean: Double, n: Double, sigma: Double) {
 	val min = mean - half
 	val max = mean + half
 
-	override def toString = s"$mean ± $half [d=$delta, n=$n, nsigma=$nsigma]\n[$min ; $max] " +
+	override def toString = s"$mean ± $half [d=$delta, sigma=$sigma, n=$n, nsigma=$nsigma]\n[$min ; $max] " +
 			(if (min < 601.971 && max > 601.971) "OK" else "NOK")
 }

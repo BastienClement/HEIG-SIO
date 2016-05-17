@@ -10,6 +10,7 @@
 \usepackage{enumerate}
 \usepackage[T1]{fontenc}      
 \usepackage[utf8]{inputenc} 
+\usepackage{lmodern}
 \usepackage[frenchb]{babel}  
 \usepackage{fancyhdr}
 \usepackage{graphicx}
@@ -92,274 +93,179 @@ et à son intégrale sur l'intervalle $[0,15]$
 	G = \int_{0}^{15} g(x) \,dx
 \]
 
-De même que pour le travail précédent, les tests ont été effectués sur une machine équipée d'un processeur \emph{Intel Core i5-3570} à 3.57 GHz avec 16 GB de RAM et exécutant Windows 10 et Java 8u91.
+De même que pour le travail précédent, le laboratoire a été réalisé avec le langage Scala et les tests ont été effectués sur une machine équipée d'un processeur 4 \emph{cores} \emph{Intel Core i5-3570} à 3.57 GHz avec 16 GB de RAM et exécutant Windows 10 et Java 8u91.
 
-\section{Méthodes implémentés}
+De façon similaire au dernier travail, les mesures ont été effectuées en parallèle, avec 1 \emph{thread} par échantillonneur, dans le but de réduire le temps total de calcul nécessaire. Une attention particulière a été portée à s'assurer que d'autres processus ne perturbent pas les mesures de temps en ajustant la priorité relative d'exécution du processus de test.
+
+Les instructions de compilation et d'exécution, identiques à celles du TP1, ne sont pas précisées dans ce rapport. En cas de besoin, un fichier \texttt{README.txt} en résume l'essentiel dans l'archive ZIP.
+
+\section{Méthodes implémentées}
 
 \subsection{Échantillonnage uniforme {\normalfont({\tt UniformSampler})}}
 
-Cette première approche relativement simple cherche à estimer $G$ en calculant la hauteur moyenne
+Cette première approche relativement simple cherche à estimer l'aire $G$ en estimant une hauteur moyenne
 \[
-	\bar{Y} = \frac{1}{N} \sum_{k=1}^{N} g(X_k)
+	\bar{Y} = \frac{1}{N} \sum_{k=1}^{N} g(X_k) \text{, avec } X_k \sim \mathcal{U}(a, b)
 \]
-multipliée par la largeur de l'intervalle d'intégration $(b-a)$.
+qui sera multipliée par la largeur de l'intervalle d'intégration $(b-a)$ pour obtenir $\hat{G}$. Les points d'échantillonnage utilisés sont choisis uniformément sur l'intervalle d'intégration.
 
 \subsection{Échantillonnage préférentiel {\normalfont({\tt ImportanceSampler})}}
 
-Une approche basées sur la méthode des mélanges et une base d'acceptation-rejet. Dans le cas d'un rejet, les propriétés géométriques du problème peuvent être utilisées pour obtenir en temps constant une solution alternative valide. L'idée est développée dans le point $2.b$ du TP1.
+Cette seconde méthode d'intégration cherche à favoriser l'échantillonnage des points contribuant le plus à la valeur de $G$. Pour se faire, une variable aléatoire $X$ définie par une fonction de densité $f(x)$ sur le domaine d'intégration $[a,b]$ est utilisée pour fournir les points d'échantillonnage. On applique ensuite une méthodologie similaire à l'échantillonnage uniforme en utilisant $Y_k=\frac{g(X_k)}{f(X_k)}$.
 
-Dans un premier temps, une tranche de la fonction est choisie aléatoirement avec une probabilité égale au rapport entre l'aire de la tranche et l'aire de la fonction dans son ensemble.
+La fonction choisie doit de plus vérifier $f(x) > 0$ pour tout $x$ tel que $g(x) \ne 0$.
 
-Par la suite, un point $(x, y)$ est généré uniformément dans le rectangle $[a, b]\times[0,y_0+y_1]$. Si le point tombe sous la courbe de la fonction, $x$ est retourné, dans le cas contraire, une symétrie est appliquée pour obtenir un point sous la courbe. 
+L'objectif visé est de réduire la variance, et donc l'écart-type, des échantillonnages réalisés afin d'augmenter la vitesse de convergence de l'estimation.
 
-Ici, nous avons une complexité en $O(1 + a)$, avec $a$ la complexité de choisir une tranche aléatoirement. Dans le cadre du cours, nous avons vu un algorithme en $O(n)$ avec $n$ le nombre de tranches.
+Pour des performances optimales, il est important que $f(x)$ ressemble le plus possible à la fonction à intégrer. Dans le cadre de se laboratoire, elle sera construite en tant que fonction affine-par-morceaux, similaire à celles du TP1, dont les points de définition seront échantillonnés régulièrement sur l'ensemble du domaine d'intégration.
 
-Une méthode alternative (la \emph{méthode de l'alias}), permettant de produire un choix en temps constant a été mentionnée à de nombreuses occasions. En recherchant d'avantage d'informations, j'ai pu trouver une très bonne explication accompagnée d'une implémentation Java de l'algorithme que j'ai pu réutiliser. Plus de détails sont disponibles dans le fichier \texttt{DiscreteGenerator.scala}.
-
-Ce générateur produit donc des réalisations en temps $O(1)$.
-
-\subsection{Échantillonnage avec variable de contrôle {\normalfont({\tt ControlSampler})}}
-
-Cette dernière approche réutilise le concept de sélection de tranche de l'algorithme précédent mais utilise la méthode développée au point $1.e$ du TP1: une fois la tranche choisie, l'inverse de la fonction de répartition associée à la variable aléatoire définie par la tranche est utilisée pour produire une réalisation en temps constant.
-
-Comme expliqué dans le TP1, un cas particulier se présente lorsque la section de la fonction correspond à une tranche uniforme. Dans ce cas, l'algorithme équivaut à la génération d'une uniforme entre les deux bornes de la tranche. 
-
-\section{Compilation et exécution}
-
-Le choix d'un langage un peu particulier impose une section sur la méthode de compilation et d'exécution du logiciel. La compilation d'un programme Scala produit du bytecode Java exécutable sur une JVM standard. Une archive JAR exécutable \texttt{labo1.jar} est disponible à la racine de l'archive ZIP et propose d'exécuter une version précompilée du logiciel sans autre dépendances que Java.
-
-\begin{figure}[h]
-\begin{tabular}{l}
-	\hline
-	{\ttfamily\color{gray}
-	? java -jar labo1.jar <nb iter> <nb gen/iter> <1|0 exécution parallèle> <graine>}\\
-	{\ttfamily
-	\$ java -jar labo1.jar 1000 100000 1 42}\\
-	\hline
-\end{tabular}
-\caption{Exemple de lancement avec \texttt{labo1.jar}}
-\end{figure}
-
-Les paramètres donnés en exemple correspondent aux valeurs par défaut utilisées si le paramètre correspondant est omis. Utiliser l'exécution parallèle divise en théorie le temps d'exécution total par 3.
-
-Dans le cas où des modifications devaient être apportées, il est nécessaire de recompiler le logiciel. L'utilisation de sbt, le compilateur de Scala est très simple puisqu'il se chargera de télécharger et mettre en place toutes les dépendances nécessaires pour compiler le code. Une version automatique de sbt (\texttt{sbt.jar}) est disponible dans l'archive ZIP et peut être lancée directement.
-
-Lorsque sbt est lancé, celui-ci propose un shell interactif permettant de donner des commandes au compilateur. Il permet également d'exécuter directement une application avec la commande \texttt{run}. Dans le cas où les sources ont été modifiées depuis la dernière compilation, \emph{sbt} recompilera automatiquement les fichiers nécessaires avant de lancer le programme.
-
-\begin{figure}[h]
-\begin{tabular}{l}
-	\hline
-	{\ttfamily \$ java -jar sbt.jar}\\
-	{\ttfamily [info] Loading project definition from C:/Users/.../project}\\
-	{\ttfamily [info] Set current project to Labo1 (in build file:/C:/Users/.../Labo1/)}\\
-	{\ttfamily > run 1000 100000 1 42}\\
-	{\ttfamily [info] Compiling 12 Scala sources to C:/Users/.../Labo1/target/classes...}\\
-	{\ttfamily [info] 'compiler-interface' not yet compiled for Scala 2.11.8. Compiling...}\\
-	{\ttfamily [info]   Compilation completed in 10.482 s}\\
-	{\ttfamily [info] Running Labo1Tests 1000 100000 1 42}\\
-	{\ttfamily Warming up...}\\
-	{\ttfamily ...}\\
-	\hline
-\end{tabular}
-\caption{Exemple de lancement avec \texttt{sbt.jar}}
-\end{figure}
-
-\section{Validation des implémentations}
-
-Afin de valider l'implémentations des algorithme, les moyennes des valeurs générées par chaque générateur seront comparées à l'espérance calculée des fonctions de test. Si tout fonctionne correctement, les valeurs obtenues expérimentalement devraient être très proches de la valeur calculée.
-
-Le tableau de la figure 3 présente les résultats obtenus dans cette première phase.
-
-\begin{figure}[h]
-\bgroup
-\def\arraystretch{1.2}
-\begin{tabular}{|llcccc|}
-	\hline
-	\textbf{Fonction} & \textbf{Algorithme} & \textbf{Estimation} & \textbf{Écart-type} & \textbf{IC$_{95\%}$} & \textbf{$\mathbb{E}[x] \in$ IC}\\
-	\hline
-	
-	\hline
-	& Acceptation-rejet & 10.00004 & 0.002873 & [9.999993; 10.00010] & \cmark\\
-	Uniforme & Géométrique &  9.999937 & 0.002890 & [9.999880; 9.999993] & \xmark\\
-	$\mathbb{E}[x]=10.0$ & Fonction inverse & 10.00003 & 0.002902 & [9.999981; 10.00009] & \cmark\\
-	
-	\hline
-	& Acceptation-rejet & 8.500078 & 0.004569 & [8.499989; 8.500168] & \cmark\\
-	Triangulaire & Géométrique &  8.499996 & 0.004619 & [8.499906; 8.500087] & \cmark\\
-	$\mathbb{E}[x]=8.5$ & Fonction inverse & 8.499984 & 0.004575 & [8.499895; 8.500074] & \cmark\\
-	
-	\hline
-	& Acceptation-rejet & 10.75805 & 0.005199 & [10.75795; 10.75815] & \cmark\\
-	Plat & Géométrique & 10.75794 & 0.005171 & [10.75784; 10.75804] & \cmark\\
-	$\mathbb{E}[x]=10.757$ & Fonction inverse & 10.75802 & 0.005188 & [10.75792; 10.75812] & \cmark\\
-	
-	\hline
-	& Acceptation-rejet & 10.26174 & 0.005763 & [10.26163; 10.26185] & \cmark\\
-	Accidenté & Géométrique & 10.26171 & 0.005678 & [10.26159; 10.26182] & \cmark\\
-	$\mathbb{E}[x]=10.261$ & Fonction inverse & 10.26174 & 0.005770 & [10.26162; 10.26185] & \cmark\\
-	
-	\hline
-\end{tabular}
-\egroup
-\caption{Résultats obtenus pour l'estimation de l'espérance}
-\end{figure}
-
-\subsection{Analyse}
-
-Les résultats sont dans l'ensemble conformes aux attentes. Les estimations sont systématiquement très proches de l'espérance calculée ce qui est une preuve du bon fonctionnement des générateurs. Un cas particulier se présente avec le générateur géométrique pour la fonction uniforme: l'intervalle de confiance calculé ne contient pas la valeur attendue. Rien d'inquiétant ici puisque le concept même d'intervalle de confiance implique un risque d'erreur (ici de 5\%). Malgré tout, la valeur estimée reste extrêmement proche de la valeur attendue et l'intervalle manque de contenir cette dernière de très peu. De plus, l'utilisation d'une autre graine conduit à un intervalle de confiance pour la même fonction qui contient cette fois-ci la valeur calculée.
-
-Nous pouvons donc en conclure que les générateurs fonctionnent de façon conforme aux attentes.
-
-\section{Temps de génération}
-
-Dans un second temps, nous nous intéresserons à mesurer le temps nécessaire à chaque générateur pour produire une série de réalisations (ici 1'000'000).
-
-Le tableau de la figure 4 présente les résultats obtenus. Pour chaque fonction, le ratio $r$ de l'aire sous la courbe de la fonction par rapport à l'aire du rectangle encadrant est indiqué.
-
-La figure 5 propose une représentation graphique de ces temps de calculs. Les intervalles de confiances y sont indiqués mais leur étroitesse ne les rends pas très intéressants.
-
-\begin{figure}[h]
-\bgroup
-\def\arraystretch{1.2}
-\begin{tabular}{|llcccc|}
-	\hline
-	\textbf{Fonction} & \textbf{Algorithme} & \textbf{Moyenne} & \textbf{Écart-type} & \textbf{IC$_{95\%}$} & \textbf{$\Delta$ IC}\\
-	\hline
-	
-	\hline
-	& Acceptation-rejet & 53.552590 & 7.041156 & [53.414584; 53.690597] & 0.276013\\
-	Uniforme & Géométrique &  92.319710 & 8.157461 & [92.159824; 92.479596] &     0.319772\\
-	$r=1.0$ & Fonction inverse & 61.869008 & 7.200549 & [61.727877; 62.010139] & 0.282262\\
-	 		
- 	\hline
- 	& Acceptation-rejet & 137.81593 & 7.751517 & [137.66405; 137.96864] & 0.303859\\
- 	Triangulaire & Géométrique &  96.373801 & 7.497934 & [96.226841; 96.520760] & 0.293919\\
- 	$r=0.384$ & Fonction inverse & 73.564317 & 7.159326 & [73.423994; 73.704640] & 0.280646\\
- 	
- 	\hline
- 	& Acceptation-rejet & 65.621054 & 7.580608 & [65.472475; 65.769634] & 0.297160\\
- 	Plat & Géométrique &  94.995949 & 7.540267 & [94.848160; 95.143738] & 0.295578\\
- 	$r=0.872$ & Fonction inverse & 71.114322 & 7.598602 & [70.965389; 71.263254] & 0.297865\\
- 	
- 	\hline
- 	& Acceptation-rejet & 208.38447 & 8.445177 & [208.21894; 208.54999] & 0.331051\\
- 	Accidenté & Géométrique & 95.905446 & 6.879117 & [95.770616; 96.040277] & 0.269661\\
- 	$r=0.258$& Fonction inverse & 74.447486 & 6.724518 & [74.315685; 74.579286] & 0.263601\\
- 	
-	\hline
-\end{tabular}
-\egroup
-\caption{Résultats obtenus pour la mesure de temps}
-\end{figure}
-
-\begin{figure}[h!]
-\begin{center}
-\begin{tikzpicture}
-\begin{axis}[
-width=10cm,
-xtick={1,...,4},
-xticklabels={%
-	Uniforme,
-	Triangulaire,
-	Plat,
-	Accidenté},
-grid=major,
-ybar,
-legend style={at={(1.05,0.5)},anchor=west},
-xlabel={Fonction utilisée},
-ylabel={Temps (ms)}
-]
-
-\addplot[
-fill=blue!25,
-draw=black,
-point meta=y,
-every node near coord/.style={inner ysep=5pt},
-error bars/.cd,
-y dir=both,
-y explicit
-] 
-table [y error=error] {
-	x   y           error    label
-	1   53.552590   0.276013 1 
-	2   137.815935  0.303859 2
-	3   65.621054   0.297160 3
-	4   208.384474  0.331051 4
-};
-\addlegendentry{Acceptation-rejet}
-
-\addplot[
-fill=red!25,
-draw=black,
-point meta=y,
-every node near coord/.style={inner ysep=5pt},
-error bars/.cd,
-y dir=both,
-y explicit
-] 
-table [y error=error] {
-	x   y           error    label
-	1   92.319710   0.319772 1
-	2   96.373801   0.293919 2
-	3   94.995949   0.295578 3
-	4   95.905446   0.269661 4
-};
-\addlegendentry{Géométrique}
-
-\addplot[
-fill=green!25,
-draw=black,
-point meta=y,
-every node near coord/.style={inner ysep=5pt},
-error bars/.cd,
-y dir=both,
-y explicit
-] 
-table [y error=error] {
-	x   y           error    label
-	1   61.869008   0.282262 1
-	2   73.564317   0.280646 2
-	3   71.114322   0.297865 3
-	4   74.447486   0.263601 4
-};
-\addlegendentry{Fonction inverse}
-
-\draw ({rel axis cs:0,0}|-{axis cs:0,0}) -- ({rel axis cs:1,0}|-{axis cs:0,0});
-\end{axis}
-\end{tikzpicture}
-\end{center}
-\caption{Temps de génération pour 1'000'000 valeurs}
-\end{figure}
-
-\subsection{Analyse}
-
-Dans un premier temps, il est important de mentionner que la JVM est un environement doté d'un compilateur JIT qui choisira arbitrairement, lors de l'exécution, quels morceaux de code semblent intéressant à compiler en langage machine pour améliorer les performances d'exécution. Les résultats obtenus au lancement de l'application risque ainsi d'être considérablement différent des résultats obtenus après compilation JIT.
-
-Dans le but de réduire ce phénomène, un \emph{warmup} est effectué au lancement de l'application en générant 1'000'000 valeurs avec 100 fonctions générées aléatoirement sur les 3 générateurs. Le compilateur JIT étant non-déterministe, ceci ne garanti pas son exécution ni même la compilation du code, mais des tests empiriques montrent que cela est suffisant.
-
-Un premier élément intéressant dans ces résultats est la corrélation entre le ratio d'aire et les performances du générateur par acceptation-rejet. Comme expliqué dans l'introduction des algorithmes, ce générateur nécessite potentiellement plusieurs itérations avant de fournir un résultat acceptable. La probabilité de réussir chaque essai est directement lié à la part d'aire du rectangle recouvert par la fonction. Les résultats confirment ce comportement en vérifiant plus ou moins la relation attendue:
+Plus précisément, les points définissant une fonction $f(x)$ en $N$ morceaux (et donc $N+1$ points) sont définis comme 
 \[
-	t_f \approx \frac{t_{uniforme}}{r_f}
+	P_k(x_k, y_k) = ( x_k, g(x_k) )
+	\text{ , avec } x_k = a + \frac{k}{N} (b - a)
+	\text{ , pour } k = 0, 1, \dots, N
 \]
-Les deux autres générateurs semblent quant à eux indépendants du ratio d'aire et relativement constants en terme de performances. En effet, ces algorithmes sont tous deux en complexité temporelle $O(1)$, indépendants donc à la fois de l'aire recouverte et du nombre de tranches.
 
-Une particularité peut tout de même être observée avec la fonction uniforme pour laquelle le générateur par fonction inverse semble légèrement plus rapide que la normale. Tout autres choses étant égales, la différence provient probablement du fait que la fonction uniforme vérifie systématiquement la condition $y_0=y_1$. La génération se fait alors selon la formule
-\[ f(y) = x_0 + y * (x_1 - x_0) \]
-au lieu de la variante plus complexe lorsque $y_0\ne y_1$
-\[ f(y) = x_0 + \frac{\sqrt{y * (y_1^2 - y_0^2) + y_0^2} - y_0}{m} \]
-considérablement plus couteuse à cause de l'évaluation de la racine.
+Nous pouvons finalement noter qu'avec une telle construction, la condition 
+$\forall x, g(x) \ne 0 \Rightarrow f(x) > 0$
+est toujours vérifiée, formant ainsi une fonction acceptable pour $f(x)$.
 
-L'explication de la différence régulière entre le générateur géométrique et le générateur par fonctions inverses est, lui, plus délicat à expliquer sans analyse plus approfondie. Plusieurs facteurs peuvent y contribuer:
+Dans le cadre de ce travail, nous utiliserons $N = 15$ comme valeur par défaut pour cet échantillonneur. La figure 1 présente la fonction $f(x)$, relative à $g(x)$, construite sur la base de 15 points.
 
-\begin{enumerate}
-	\item Le générateur géométrique nécessite la génération d'une uniforme supplémentaire par rapport au générateur par fonctions inverses.
-	\item Le générateur géométrique utilise la méthode \texttt{slice.evaluate} et effectue donc un appel de fonction alors que le calcul de l'inverse est réalisé directement dans le corps du générateur.
-\end{enumerate}
+L'implémentation de cette méthode réutilise le générateur de variable aléatoire \texttt{InverseGenerator} implémenté lors du TP1 pour générer les réalisations de la variable $X$.
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics[width=8.5cm]{img_graph1}
+	\end{center}
+	\caption{La fonction $f(x)$ ou $h(x)$, relative à $g(x)$ et définie par $N=15$ points}
+\end{figure}
+
+
+\subsection{Échantillonnage uniforme avec variable de contrôle {\normalfont({\tt ControlSampler})}}
+
+Cette dernière méthode d'échantillonnage est également une méthode de réduction de variance, dont l'objectif est de diminuer la variabilité des échantillons collectés pour réduire l'intervalle de confiance indépendamment du nombre d'itération effectuées.
+
+Cette méthode requiert la connaissance d'une variable aléatoire $Z = h(X)$, fortement corrélée avec notre valeur à estimer $G$, dont l'espérance $\mu=E(Z)$ est connue.
+
+Comme pour la méthode préférentielle, nous allons construire une telle variable en construisant une fonction affine-par-morceau $h(x)$ sur la base d'un découpage et échantillonnage régulier de la fonction $g(x)$. Idem, le nombre de tranches par défaut utilisé dans ce travail sera de $N=15$.
+
+Cette méthode requiert en principe la conservation de chaque échantillon généré pour calculer le coefficient multiplicatif $c$. Il est cependant possible de se contenter d'une estimation de $c$ calculée sur un nombre restreint $M$ d'échantillons pour produire une constante $c$ qui sera \emph{assez bonne} pour produire des résultats de bonne qualité.
+
+Dans notre cas, nous utiliserons par défaut $M=10000$.
+
+\subsection{Note sur le paramètre $N$}
+
+Le paramètre $N$ définissant le nombre de morceaux à construire lors de la fabrication des fonctions auxiliaires $f(x)$ ou $h(x)$ peut facilement être défini à une valeur \emph{trop élevée} pour rester cohérent avec le domaine de ce laboratoire.
+
+En effet, l'échantillonnage régulier de la fonction à intégrer avec beaucoup de précision peut conduire à des résultats pratiquement exactes avec un nombre d'itération minimal. Par exemple, en utilisant $N=100000$, il est possible de générer un intervalle de confiance de largeur $\Delta\text{IC} < 0.001$ en une seule itération de l'échantillonneur préférentiel.
+
+Cependant, l'intérêt des méthodes de Monte-Carlo est d'être applicable sur un domaine d'intégration bien plus grand que $[0,15]$, là où l'échantillonnage haute résolution provoqué par $N$ grand n'est plus envisageable.
+
+C'est pourquoi nous nous limiterons à utiliser $N \le 15$.
+
+\section{Validation des implémentations et performances pour un temps donné}
+
+Avant de procéder à une analyse plus détaillée du comportement des différentes méthodes implémentées, il est nécessaire de s'assurer de leur bon fonctionnement. En tant que valeur de référence, j'ai choisi d'utiliser $G_W \approxeq 601.971$, calculée par WolframAlpha.
+
+Chaque échantillonneur a été exécuté pendant 10 minutes, avant d'observer les résultats obtenus.
+Le tableau de la figure 2 présente les résultats de cette première phase.
+
+\begin{figure}[h]
+\bgroup
+\def\arraystretch{1.2}
+\begin{center}
+\begin{tabular}{|lcccccc|}
+	\hline
+	\textbf{Méthode} & \textbf{Itérations} & $\hat{G}$ & $\hat{\sigma}_{\hat{G}}$ & \textbf{IC$_{95\%}$} & \textbf{$\Delta$IC} & \textbf{$G_W \in$ IC}\\
+	\hline
+	Uniforme & $3.978 \cdot 10^9$ & 601.960 & 0.00713 & [601.946; 601.974] & 0.0280 & \cmark\\
+	\hline
+	Préférentiel & $2.863 \cdot 10^9$ & 601.973 & 0.00156 & [601.970; 601.976] & 0.0061 & \cmark\\
+	$N=15$ & & & & & &\\
+	\hline
+	Variable de contrôle & $3.754 \cdot 10^9$ & 601.971 & 0.00281 & [601.968; 601.974] & 0.0056 & \cmark\\
+	$N=15,M=10000$ & & & & & &\\
+	\hline
+\end{tabular}
+\end{center}
+\egroup
+\caption{Résultats obtenus pour l'estimation de $G$ après 10 minutes d'exécution}
+\end{figure}
+
+\subsection{Analyse}
+
+Aucune surprise ici, les trois échantillonneurs produisent une estimation de l'intégrale avec un intervalle de confiance contenant la valeur de référence et attestant ainsi leur bon fonctionnement.
+
+Une analyse préliminaire confirme les attentes concernant les différentes propriétés de ces méthodes.
+
+L'échantillonneur uniforme produit le plus grand nombre d'itérations dans un intervalle de temps donné, certainement due au fait de sa relative simplicité algorithmique par rapport aux deux autres. En revanche, l'intervalle de confiance qu'il produit est considérablement plus large que celui des deux autres méthodes, représentant ainsi un résultat de moins bonne qualité.
+
+Les échantillonneurs préférentiel et avec variable de contrôle sont très similaires au niveau de la largeur de l'intervalle de confiance produit. Il est cependant intéressant de relever que l'écart-type de l'échantillonneur avec variable de contrôle est plus élevé que celui de l'échantillonneur préférentiel.
+
+Il semblerait donc que les résultats produits avec variable de contrôle soient initialement moins précis. Cependant, sa vitesse d'exécution très proche de l'échantillonneur uniforme lui permet d'atteindre un nombre d'itérations bien plus élevé que l'échantillonneur préférentiel et produire ainsi un résultat équivalent, voir meilleur, que ce dernier.
+
+\section{Performances pour un objectif donné}
+
+Dans cette seconde phase, nous nous intéresserons à l'évolution du temps de calcul requis par chaque méthode pour atteindre une précision données, c'est à dire un intervalle de confiance dont la largeur ne dépasse pas un objectif fixé.
+
+Le tableau de la figure 3 présente les résultats obtenus, illustrés par le graphique de la figure 4.
+
+\begin{figure}[h]
+\bgroup
+\def\arraystretch{1.2}
+\begin{center}
+\begin{tabular}{|llccccc|}
+	\hline
+	\textbf{Objectif} & \textbf{Méthode} & \textbf{Temps} [s] & $\hat{G}$ & $\sqrt{N}\hat{\sigma}_{\hat{G}}$ & \textbf{IC$_{95\%}$} & \textbf{$\Delta$ IC}\\
+	\hline
+	                                  & Uniforme             & 1.8871 & 602.056 & 450.94 & [601.816; 602.306] & 0.4999\\
+	$\Delta\text{\bfseries IC} < 0.5$ & Préférentiel         & 0.0962 & 601.882 & 83.287 & [601.633; 602.131] & 0.4979\\
+	                                  & Variable de contrôle & 0.0886 & 601.972 & 88.188 & [601.722; 602.221] & 0.4990\\
+	\hline
+	                                   & Uniforme             & 7.6218 & 601.727 & 450.76 & [601.727; 601.977] & 0.2499\\
+	$\Delta\text{\bfseries IC} < 0.25$ & Préférentiel         & 0.3602 & 601.988 & 83.126 & [601.863; 602.113] & 0.2499\\
+	                                   & Variable de contrôle & 0.3143 & 601.989 & 88.079 & [601.864; 602.114] & 0.2498\\
+	\hline
+	                                    & Uniforme             & 30.200 & 602.017 & 450.85 & [601.955; 602.079] & 0.1249\\
+	$\Delta\text{\bfseries IC} < 0.125$ & Préférentiel         & 1.4319 & 601.957 & 83.200 & [601.894; 602.019] & 0.1249\\
+	                                    & Variable de contrôle & 1.2368 & 601.963 & 87.992 & [601.901; 602.025] & 0.1249\\
+	\hline
+	                                   & Uniforme             & 190.28 & 601.976 & 450.83 & [601.951; 602.001] & 0.0499\\
+	$\Delta\text{\bfseries IC} < 0.05$ & Préférentiel         & 8.9191 & 601.962 & 83.150 & [601.937; 601.987] & 0.0499\\
+	                                   & Variable de contrôle & 7.7002 & 601.966 & 87.979 & [601.941; 601.991] & 0.0499\\
+	\hline
+	                                    & Uniforme             & 759.29 & 601.966 & 450.83 & [601.954; 601.979] & 0.0249\\
+	$\Delta\text{\bfseries IC} < 0.025$ & Préférentiel         & 35.625 & 601.974 & 83.147 & [601.962; 601.987] & 0.0249\\
+	                                    & Variable de contrôle & 30.515 & 601.968 & 87.966 & [601.956; 601.988] & 0.0249\\
+	\hline
+\end{tabular}
+\end{center}
+\egroup
+\caption{Résultats obtenus pour les mesures de temps ($N=15,M=10000$)}
+\end{figure}
+
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics[width=15cm]{img_graph2}
+	\end{center}
+	\caption{Fonction $f(x)$ construite avec $N=15$ points}
+\end{figure}
+
+\subsection{Analyse}
+
+À nouveau, les résultats obtenus ici sont conformes aux attentes et aux observations effectuées au point 3. Toutes les intervalles de confiance contiennent la valeur de référence $G_W$ et leur largeur correspond à l'objectif.
+
+Une petite note concernant la variabilité de $\Delta\text{IC}$ pour les objectifs $0.5$ et $0.25$: idéalement, toutes ces valeurs devraient être les mêmes, juste en dessous de l'objectif puisque l'opérateur utilisé est strict. Cependant dans des soucis des performances, les test d'atteinte de l'objectif ne sont pas effectués toutes les itérations mais toutes les 10000 itérations.
+
+Pour de grande valeurs d'itérations, cette particularité a un effet négligeable sur le résultat puisque celui-ci évolue de plus en plus lentement relativement aux itérations. À l'inverse, lorsque le nombre d'itération a effectuer pour atteindre l'objectif est faible, l'impact de l'exécution en bloc se manifeste de façon visible puisque la largeur de l'intervalle évolue alors beaucoup plus rapidement relativement au nombre d'itérations.
 
 \section{Conclusion}
 
-Dans l'ensemble les générateurs réalisés au cours de ce travail pratique fonctionnent conformément aux attentes. Les résultats sont cohérents avec la logique de leur implémentation et la régularité des deux générateurs $O(1)$ est une propriété intéressante pour faciliter la prévision de temps d'exécution d'une simulation dont le nombre de valeurs à générer est connu.
+Les échantillonneurs implémentés dans le cadre de ce travail pratique semblent fonctionner de façon correcte et fournissent des résultats conforme aux attentes. 
 
-Avec un temps moyen d'environ 70 ns par réalisation, le générateur par fonctions inverses semble offrir des performances qui conviendront sans doute à la réalisation des prochains travaux pratiques.
+Il est intéressant de constater la différence de performances, en terme de précision du résultat, entre une approche \emph{naïve} telle que celle de l'échantillonnage uniforme et des approches plus \emph{avancées} tel que les méthodes préférentielle et avec variables de contrôle. En pratique, l'implémentation des trois échantillonneur est très semblable, et le travail supplémentaire nécessaire au développement d'une approche \emph{avancée} peut pratiquement être considéré comme nul.
+
+Ce laboratoire permet donc de se rendre compte qu'un bon développeur logiciel ne sait pas seulement résoudre les problèmes aux quels il fait face, mais qu'il sait les résoudre efficacement avec un effort équivalent... pour autant qu'il ait suivi ses cours avec attention ! :-)
 
 \end{document}

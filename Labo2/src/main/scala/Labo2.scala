@@ -27,14 +27,14 @@ object Labo2 extends App {
 
 	/** Démarrage... */
 	println("Warming up...")
-	samplers.foreach(s => s.sample(a, b).run(10000000)) // 10M
+	samplers.foreach(s => s.sample(a, b).run(100000000)) // 100M
 
-	/** 3 min */
-	println("\nRunning for 3 minutes...")
-	println(samplers.map(implicit s => s.sample(a, b).runFor(3.minutes).toString).mkString("\n\n"))
+	/** 10 min */
+	println("\nRunning for 10 minutes...")
+	println(samplers.map(implicit s => s.sample(a, b).runFor(10.minutes).toString).mkString("\n\n"))
 
 	/** Target */
-	for (target <- Seq(0.5, 0.2, 0.1, 0.02)) {
+	for (target <- Seq(0.5, 0.25, 0.125, 0.05, 0.025)) {
 		println(s"\nTargeting d = $target...")
 
 		println(samplers.par.map { sampler =>
