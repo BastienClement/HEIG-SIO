@@ -1,33 +1,46 @@
 import java.util.Random
-import sampler.{ControlSampler, ImportanceSampler, UniformSampler}
+import sampler._
 import util.{ExtendedRandom, Timer}
+import scala.concurrent.duration._
 
 /**
-  * Created by galedric on 18.04.16.
+  * Laboratoire 2
   */
 object Labo2 extends App {
-	def g(x: Double) = (25 + x * (x - 6) * (x - 8) * (x - 14) / 25) * Math.pow(Math.E, Math.sqrt(1 + Math.cos(x * x / 10)))
+	/** La fonction à intégrer */
+	def g(x: Double): Double =
+		(25 + x * (x - 6) * (x - 8) * (x - 14) / 25) * Math.pow(Math.E, Math.sqrt(1 + Math.cos(x * x / 10)))
 
-	val a = 0
-	val b = 15
+	/** Bornes d'intégration */
+	val (a, b) = (0, 15)
 
-	//implicit val rand = Labo1.defaultRandom(42)
-	implicit val rand = new Random with ExtendedRandom
-	val n = 100000000
+	/** Initialisation de l'aléatoire */
+	def defaultRandom = new Random(2016) with ExtendedRandom
+	def init(block: ExtendedRandom => FunctionSampler) = block(defaultRandom)
 
-	val timer = new Timer
+	/** Liste des samplers */
+	val samplers = Seq(
+		init { implicit rand => new UniformSampler(g) },
+		init { implicit rand => new ImportanceSampler(g) },
+		init { implicit rand => new ControlSampler(g) }
+	).par
 
-	val sampler1 = new UniformSampler(g)
-	println(sampler1(a, b, n))
-	println(timer.time / 1000 + " sec")
+	/** Démarrage... */
+	println("Warming up...")
+	samplers.foreach(s => s.sample(a, b).run(10000000)) // 10M
 
-	timer.reset()
-	val sampler2 = new ImportanceSampler(g, 10)
-	println(sampler2(a, b, n))
-	println(timer.time / 1000 + " sec")
+	/** 3 min */
+	println("\nRunning for 3 minutes...")
+	println(samplers.map(implicit s => s.sample(a, b).runFor(3.minutes).toString).mkString("\n\n"))
 
-	timer.reset()
-	val sampler3 = new ControlSampler(g, 10, 100000)
-	println(sampler3(a, b, n))
-	println(timer.time / 1000 + " sec")
+	/** Target */
+	for (target <- Seq(0.5, 0.2, 0.1, 0.02)) {
+		println(s"\nTargeting d = $target...")
+
+		println(samplers.par.map { sampler =>
+			val timer = new Timer
+			val res = sampler.sample(a, b).runUntil(target)
+			s"${res.toString} [" + (timer.time / 1000) + " sec]"
+		}.mkString("\n\n"))
+	}
 }
