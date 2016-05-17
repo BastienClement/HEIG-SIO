@@ -256,6 +256,8 @@ Le tableau de la figure 3 présente les résultats obtenus, illustrés par le gr
 
 À nouveau, les résultats obtenus ici sont conformes aux attentes et aux observations effectuées au point 3. Toutes les intervalles de confiance contiennent la valeur de référence $G_W$ et leur largeur correspond à l'objectif.
 
+Globalement, les performances du générateur uniforme ne sont jamais compétitives avec celles des échantillonneurs préférentiels et avec variable de contrôle qui sont systématiquement plus de $20$ fois plus rapides à atteindre l'objectif. L'échantillonneur avec variable de contrôle est également toujours plus rapide que le préférentiel, mais dans une bien moindre mesure et les différences pratiques ne commencent à être humainement observables que lors d'une recherche d'intervalle dont la largeur est inférieure à $0.05$.
+
 Une petite note concernant la variabilité de $\Delta\text{IC}$ pour les objectifs $0.5$ et $0.25$: idéalement, toutes ces valeurs devraient être les mêmes, juste en dessous de l'objectif puisque l'opérateur utilisé est strict. Cependant dans des soucis des performances, les test d'atteinte de l'objectif ne sont pas effectués toutes les itérations mais toutes les 10000 itérations.
 
 Pour de grande valeurs d'itérations, cette particularité a un effet négligeable sur le résultat puisque celui-ci évolue de plus en plus lentement relativement aux itérations. À l'inverse, lorsque le nombre d'itération a effectuer pour atteindre l'objectif est faible, l'impact de l'exécution en bloc se manifeste de façon visible puisque la largeur de l'intervalle évolue alors beaucoup plus rapidement relativement au nombre d'itérations.

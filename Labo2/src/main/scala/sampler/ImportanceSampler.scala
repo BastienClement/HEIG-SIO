@@ -4,6 +4,13 @@ import gen.InverseGenerator
 import scala.annotation.tailrec
 import util.{ExtendedRandom, FunctionSlicer}
 
+/**
+  * Un échantillonneur préférentiel
+  *
+  * @param g      la fonction à intégrer
+  * @param slices le nombre de morceaux à construire pour la fonction auxilière f(x)
+  * @param rand   un générateur de nombre aléatoire
+  */
 class ImportanceSampler(val g: Double => Double, slices: Int = 15)(implicit val rand: ExtendedRandom) extends FunctionSampler {
 	def sample(a: Double, b: Double) = new SamplerInstance {
 		val f = FunctionSlicer.slice(g, a, b, slices).proportionalDensity

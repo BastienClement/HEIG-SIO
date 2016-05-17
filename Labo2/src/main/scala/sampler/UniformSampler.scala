@@ -2,6 +2,12 @@ package sampler
 import scala.annotation.tailrec
 import util.ExtendedRandom
 
+/**
+  * Un échantillonneur uniforme
+  *
+  * @param g      la fonction à intégrer
+  * @param rand   un générateur de nombre aléatoire
+  */
 class UniformSampler(val g: Double => Double)(implicit val rand: ExtendedRandom) extends FunctionSampler {
 	def sample(a: Double, b: Double) = new SamplerInstance {
 		var S = 0.0
